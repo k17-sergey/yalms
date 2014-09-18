@@ -4,3 +4,5 @@ composer.lock
 CONTRIBUTING.md
 readme.md
 .idea
+app/config/local
+production
