@@ -13,8 +13,8 @@ class ChangeStTchToUsers extends Migration
 	public function up()
 	{
 		//
-		//Schema::drop('students');
-		//Schema::drop('teachers');
+		Schema::drop('students');
+		Schema::drop('teachers');
 
 		Schema::create('users', function ($table) {
 			$table->increments('id');
@@ -26,6 +26,33 @@ class ChangeStTchToUsers extends Migration
 			$table->string('first_name', 32);
 			$table->string('last_name', 32);
 			$table->string('middle_name', 32);
+
+			$table->timestamps();
+		});
+
+		Schema::create('user_student', function ($table) {
+			$table->increments('id');
+
+			$table->integer('user_id');
+			$table->boolean('enabled');
+
+			$table->timestamps();
+		});
+
+		Schema::create('user_admin', function ($table) {
+			$table->increments('id');
+
+			$table->integer('user_id');
+			$table->boolean('enabled');
+
+			$table->timestamps();
+		});
+
+		Schema::create('user_teacher', function ($table) {
+			$table->increments('id');
+
+			$table->integer('user_id');
+			$table->boolean('enabled');
 
 			$table->timestamps();
 		});
