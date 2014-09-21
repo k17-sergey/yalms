@@ -1,7 +1,7 @@
 <?php
 
 class Teacher extends \Eloquent {
-	protected $fillable = [];
+	protected $fillable = ['first_name'];
 
 	/**
 	 * The database table used by the model.
