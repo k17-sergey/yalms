@@ -13,12 +13,15 @@ class FixIssues extends Migration
 	public function up()
 	{
 		//
-		Schema::create('users', function ($table) {
+		Schema::table('users', function ($table) {
 
 			$table->dropColumn('first_name');
 			$table->dropColumn('last_name');
 			$table->dropColumn('middle_name');
 			$table->dropColumn('email');
+		});
+
+		Schema::table('users', function ($table) {
 
 			$table->string('first_name', 32)->default('');
 			$table->string('last_name', 32)->default('');
@@ -35,12 +38,15 @@ class FixIssues extends Migration
 	public function down()
 	{
 		//
-		Schema::create('users', function ($table) {
+		Schema::table('users', function ($table) {
 
 			$table->dropColumn('first_name');
 			$table->dropColumn('last_name');
 			$table->dropColumn('middle_name');
 			$table->dropColumn('email');
+		});
+
+		Schema::table('users', function ($table) {
 
 			$table->string('first_name', 32);
 			$table->string('last_name', 32);
