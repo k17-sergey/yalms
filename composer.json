@@ -5,7 +5,8 @@
 	"license": "MIT",
 	"require": {
 		"laravel/framework": "4.2.*",
-		"panique/laravel-sass": "dev-master"
+		"panique/laravel-sass": "dev-master",
+        "doctrine/dbal":"2.*"
 	},
 	"require-dev": {
 		"way/generators": "2.*",
