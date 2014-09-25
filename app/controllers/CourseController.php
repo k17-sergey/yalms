@@ -51,7 +51,7 @@ class CourseController extends \BaseController
 	public function store()
 	{
         $course = new Course;
-        $course ->Name = $courseName = Input::get('name');
+        $course ->name = $courseName = Input::get('name');
         $course ->save();
 
         return Response::json(array(
@@ -100,7 +100,7 @@ class CourseController extends \BaseController
 	public function update($id)
 	{
         $course = Course::find($id);
-        $course ->Name = $courseName = Input::get('name');
+        $course ->name = $courseName = Input::get('name');
         $course ->save();
 
         return Response::json(array(
@@ -118,7 +118,7 @@ class CourseController extends \BaseController
 	 */
 	public function destroy($id)
 	{
-		$courseName =  Course::find($id)->Name;
+		$courseName =  Course::find($id)->name;
         Course::delete($id);
         return Response::json(array(
                 'status' => 'Course ' .$courseName. ' been successful removed',

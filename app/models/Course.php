@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Response;
  * Class Course
  *
  * @property integer        $id
- * @property string         $Name
+ * @property string         $name
  * @method static Course find($id)
  * @method static Course paginate()
  * @method static Course delete()
