@@ -11,6 +11,7 @@
 	"require-dev": {
 		"way/generators": "2.*",
 		"barryvdh/laravel-ide-helper": "1.*",
+        "barryvdh/laravel-debugbar": "1.*",
 		"phpunit/phpunit": "4.3.*@dev",
 		"phpunit/phpunit-mock-objects": "2.3.*@dev"
 	},
