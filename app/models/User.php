@@ -23,6 +23,9 @@ use Illuminate\Auth\Reminders\RemindableInterface;
  * @property UserTeacher $teacher
  * @property UserAdmin   $admin
  *
+ * @method  User   whereEnabled static []
+ * @method  User   wherePhone   static []
+ *
  */
 class User extends Eloquent implements UserInterface, RemindableInterface
 {
@@ -40,7 +43,7 @@ class User extends Eloquent implements UserInterface, RemindableInterface
 	 *
 	 * @var array
 	 */
-	protected $hidden = array('id', 'password', 'remember_token', 'enabled');
+	protected $hidden = array('password', 'remember_token', 'enabled');
 
 
 	public function student()
