@@ -1,24 +1,34 @@
 <?php
 
-use Illuminate\Auth\Reminders\RemindableInterface;
-use Illuminate\Auth\Reminders\RemindableTrait;
-use Illuminate\Auth\UserInterface;
 use Illuminate\Auth\UserTrait;
+use Illuminate\Auth\UserInterface;
+use Illuminate\Auth\Reminders\RemindableTrait;
+use Illuminate\Auth\Reminders\RemindableInterface;
+
 
 /**
  * Class User
  *
- * @property integer        $id
- * @property string         $first_name
- * @property string         $last_name
- * @property string         $middle_name
- * @property string         $password
- * @property string         $email
- * @property string         $phone_number
+ * @property integer     $id
+ * @property string      $first_name
+ * @property string      $middle_name
+ * @property string      $last_name
+ * @property string      $email
+ * @property string      $phone
+ * @property string      $password
+ * @property string      $remember_token
+ * @property boolean     $enabled
+ *
+ * @property UserStudent $student
+ * @property UserTeacher $teacher
+ * @property UserAdmin   $admin
+ *
+ * @method  User   whereEnabled static []
+ * @method  User   wherePhone   static []
  *
  */
-class User extends Eloquent implements UserInterface, RemindableInterface {
-
+class User extends Eloquent implements UserInterface, RemindableInterface
+{
 	use UserTrait, RemindableTrait;
 
 	/**
@@ -33,73 +43,22 @@ class User extends Eloquent implements UserInterface, RemindableInterface {
 	 *
 	 * @var array
 	 */
-	protected $hidden = array('password', 'remember_token', 'id');
-
-	protected $fillable = array(
-		'first_name',
-		'last_name',
-		'middle_name',
-		'email',
-		'phone_number'
-	);
+	protected $hidden = array('password', 'remember_token', 'enabled');
 
 
-	public function getAuthIdentifier()
+	public function student()
 	{
-		return $this->id;
+		return $this->hasOne(UserStudent::class);
 	}
 
-	/**
-	 * Get the password for the user.
-	 *
-	 * @return string
-	 */
-	public function getAuthPassword()
+	public function teacher()
 	{
-		return $this->password;
+		return $this->hasOne(UserTeacher::class);
 	}
 
-	/**
-	 * Get the e-mail address where password reminders are sent.
-	 *
-	 * @return string
-	 */
-	public function getReminderEmail()
+	public function admin()
 	{
-		return $this->email;
+		return $this->hasOne(UserAdmin::class);
 	}
-
-	/**
-	 * Get the token value for the "remember me" session.
-	 *
-	 * @return string
-	 */
-	public function getRememberToken()
-	{
-		return $this->remember_token;
-	}
-
-	/**
-	 * Set the token value for the "remember me" session.
-	 *
-	 * @param  string $value
-	 *
-	 * @return void
-	 */
-	public function setRememberToken($value)
-	{
-		$this->remember_token = $value;
-	}
-
-	/**
-	 * Get the column name for the "remember me" token.
-	 *
-	 * @return string
-	 */
-	public function getRememberTokenName()
-	{
-		return 'remember_token';
-	}
-
 
 }
