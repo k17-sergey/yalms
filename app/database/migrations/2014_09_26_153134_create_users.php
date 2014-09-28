@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
 class CreateUsers extends Migration
@@ -12,6 +11,12 @@ class CreateUsers extends Migration
 	 */
 	public function up()
 	{
+		Schema::dropIfExists('users');
+		Schema::dropIfExists('user_student');
+		Schema::dropIfExists('user_teacher');
+		Schema::dropIfExists('user_admin');
+
+
 		Schema::create('users', function ($table) {
 			$table->increments('id');
 			$table->string('first_name', 32)->default('');
