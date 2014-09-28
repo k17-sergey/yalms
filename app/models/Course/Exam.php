@@ -1,5 +1,7 @@
 <?php
 
+namespace Yalms\Models\Courses;
+
 class Exam extends \Eloquent {
 
 	protected $fillable = [];

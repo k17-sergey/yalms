@@ -1,6 +1,9 @@
 <?php
+namespace app\controllers\Api\User;
 
-class TeacherController extends \BaseController
+use Response;
+
+class UserStudentController extends \BaseController
 {
 
 	/**
@@ -10,15 +13,7 @@ class TeacherController extends \BaseController
 	 */
 	public function index()
 	{
-
-		return [
-			'items' => [
-				[
-					'first_name' => 'Михаил',
-				],
-			],
-		];
-
+		//
 	}
 
 
@@ -40,7 +35,7 @@ class TeacherController extends \BaseController
 	 */
 	public function store()
 	{
-
+		//
 	}
 
 
@@ -53,7 +48,7 @@ class TeacherController extends \BaseController
 	 */
 	public function show($id)
 	{
-
+		//
 	}
 
 

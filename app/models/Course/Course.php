@@ -12,6 +12,9 @@
  * @method static Course all()
  */
 
+namespace Yalms\Models\Courses;
+
+
 class Course extends \Eloquent {
 
 	protected $fillable = ['Name'];
@@ -30,11 +33,11 @@ class Course extends \Eloquent {
 
 	public function students()
 	{
-		return $this->belongsToMany('Student');
+		return $this->belongsToMany('UserStudent');
 	}
 
 	public function teacher()
 	{
-		return $this->belongsTo('Teacher');
+		return $this->belongsTo('UserTeacher');
 	}
 }
