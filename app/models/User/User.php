@@ -1,9 +1,12 @@
 <?php
 
-use Illuminate\Auth\UserTrait;
-use Illuminate\Auth\UserInterface;
-use Illuminate\Auth\Reminders\RemindableTrait;
+namespace Yalms\Models\Users;
+
+use Eloquent;
 use Illuminate\Auth\Reminders\RemindableInterface;
+use Illuminate\Auth\Reminders\RemindableTrait;
+use Illuminate\Auth\UserInterface;
+use Illuminate\Auth\UserTrait;
 
 
 /**
@@ -23,8 +26,10 @@ use Illuminate\Auth\Reminders\RemindableInterface;
  * @property UserTeacher $teacher
  * @property UserAdmin   $admin
  *
- * @method  User   whereEnabled static []
- * @method  User   wherePhone   static []
+ * @method static User whereEnabled($boolean)
+ * @method static User wherePhone($phone)
+ * @method static User findOrFail($phone)
+ * @method static User first()
  *
  */
 class User extends Eloquent implements UserInterface, RemindableInterface

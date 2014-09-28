@@ -1,13 +1,13 @@
 <?php
 namespace app\controllers\Api\User;
 
-use Response;
-use Request;
 use Input;
-use User;
-use UserAdmin;
-use UserTeacher;
-use UserStudent;
+use Request;
+use Response;
+use Yalms\Models\Users\User;
+use Yalms\Models\Users\UserAdmin;
+use Yalms\Models\Users\UserStudent;
+use Yalms\Models\Users\UserTeacher;
 
 class UserController extends \BaseController
 {
@@ -66,12 +66,13 @@ class UserController extends \BaseController
 		}
 
 		$user = new User;
-		$user->first_name = Request::get('first_name');
-		$user->middle_name = Request::get('middle_name');
-		$user->last_name = Request::get('last_name');
-		$user->email = Request::get('email');
-		$user->phone = Request::get('phone');
-		$user->password = Request::get('password');
+		$user->first_name = Input::get('first_name');
+		$user->middle_name = Input::get('middle_name');
+		$user->last_name = Input::get('last_name');
+		$user->email = Input::get('email');
+		$user->phone = Input::get('phone');
+		$user->password = Input::get('password');
+
 		$user->save();
 
 		$admin = new UserAdmin;

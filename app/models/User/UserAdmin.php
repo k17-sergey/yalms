@@ -1,5 +1,8 @@
 <?php
 
+namespace Yalms\Models\Users;
+
+use Eloquent;
 
 /**
  * Class UserAdmin
