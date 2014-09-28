@@ -1,5 +1,4 @@
 <?php
-use Illuminate\Support\Facades\Response;
 
 /**
  * Class Course
@@ -10,9 +9,7 @@ use Illuminate\Support\Facades\Response;
  * @method static Course paginate()
  * @method static Course delete()
  * @method static Course save()
- *
- *
- *
+ * @method static Course all()
  */
 
 class Course extends \Eloquent {

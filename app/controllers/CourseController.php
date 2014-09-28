@@ -2,129 +2,135 @@
 
 
 use Illuminate\Support\Facades\Input;
-use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\Redirect;
 
 class CourseController extends \BaseController
 {
 
-	/**
-	 * Display a listing of the resource.
-	 *
-	 * @return Response
-	 */
-	public function index()
-	{
+    /**
+     * Display a listing of the resource.
+     *
+     * @return View
+     */
+    public function index()
+    {
+        $courses = Course::all();
+        //Вполне возможна ситуация по которой мы пришли в этот контроллер
+        //после редиректа от функции удаления.
+        //Тогда у нас есть некое статусное сообщение($message),
+        //которое необходимо отрисовать на странице.
+        $message = Session::get('message');
+        if (isset($message))
+            //Сообщение таки есть.Надо его показать пользователю
+            return View::make('pages.course.index', compact('message', 'courses'));
 
-		$paginate = Course::paginate(1);
-
-		return [
-			'items'  => $paginate->getItems(),
-			'paging' => [
-				'count' => $paginate->count(),
-				'last'  => $paginate->getLastPage(),
-				'per'   => $paginate->getPerPage(),
-				'total' => $paginate->getTotal(),
-			],
-		];
-	}
-
+        return View::make('pages.course.index')->with('courses', $courses);
+    }
 
 
+    /**
+     * Show the form for creating a new resource.
+     *
+     * @return View
+     */
+    public function create()
+    {
+        //Форма создания нового курса
+        return View::make('pages.course.create');
+    }
 
-	/**
-	 * Show the form for creating a new resource.
-	 *
-	 * @return Response
-	 */
-	public function create()
-	{
-        return new Course;
 
-	}
-
-
-	/**
-	 * Store a newly created resource in storage.
-	 *
-	 * @return Response
-	 */
-	public function store()
-	{
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @return View
+     */
+    public function store()
+    {
         $course = new Course;
-        $course ->name = $courseName = Input::get('name');
-        $course ->save();
+        $course->name = Input::get('name');
+        $course->save();
+        $id = $course->id;
+        $message = 'Course ' . $course->name . ' been successful created';
 
-        return Response::json(array(
-            'status' => 'Course ' .$courseName. ' been successful created',
-            'http'=>200));
-	}
+        //Отсылка к странице новосозданомого курсу
 
-
-	/**
-	 * Display the specified resource.
-	 *
-	 * @param  int $id
-	 *
-	 * @return Response
-	 */
-	public function show($id)
-	{
-		$course =  Course::find($id);
-        return Response::json(array(
-                'course' => $course,
-                'status'=>200)
-        );
-	}
+        return Redirect::action('CourseController@show', array($id))->with('message', $message);
+    }
 
 
-	/**
-	 * Show the form for editing the specified resource.
-	 *
-	 * @param  int $id
-	 *
-	 * @return Response
-	 */
-	public function edit($id)
-	{
-       return Course::find($id);
-	}
+    /**
+     * Display the specified resource.
+     *
+     * @param  int $id
+     *
+     * @return Redirect
+     */
+    public function show($id)
+    {
 
-
-	/**
-	 * Update the specified resource in storage.
-	 *
-	 * @param  int $id
-	 *
-	 * @return Response
-	 */
-	public function update($id)
-	{
         $course = Course::find($id);
-        $course ->name = $courseName = Input::get('name');
-        $course ->save();
-
-        return Response::json(array(
-            'status' => 'Course ' .$courseName. ' been successful updated',
-            'http'=>200));
-	}
-
-
-	/**
-	 * Remove the specified resource from storage.
-	 *
-	 * @param  int $id
-	 *
-	 * @return Response
-	 */
-	public function destroy($id)
-	{
-		$courseName =  Course::find($id)->name;
-        Course::delete($id);
-        return Response::json(array(
-                'status' => 'Course ' .$courseName. ' been successful removed',
-                'http'=>200)
-        );
-	}
+        //Вполне возможна ситуация по которой мы пришли в этот контроллер
+        //после редиректа от функции создания или обновления.
+        $message = Session::get('message');
+        if (isset($message))
+            //Сообщение таки есть.Надо его показать пользователю
+            return View::make('pages.course.show', compact('message', 'course'));
+        else
+            return View::make('pages.course.show')->with('course', $course);
+    }
 
 
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  int $id
+     *
+     * @return Response
+     */
+    public function edit($id)
+    {
+        $url = URL::route('course.update', ['id' => $id]);
+        $courseName = Course::find($id)->name;
+        return View::make('pages.course.edit', compact('courseName', 'url'));
+    }
+
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  int $id
+     *
+     * @return Redirect
+     */
+    public function update($id)
+    {
+        $course = Course::find($id);
+        $course->name = $courseName = Input::get('name');
+        $course->save();
+
+        $message = 'Course ' . $course->name . ' been successful update';
+
+        //Покажем что мы там обновили
+        return Redirect::action('CourseController@show', array($id))->with('message', $message);
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  int $id
+     *
+     * @return Redirect
+     */
+    public function destroy($id)
+    {
+        $course = Course::find($id);
+        $courseName = $course->name;
+
+        $course->delete();
+
+        $message = 'Course ' . $courseName . ' been successful removed';
+        //Отправим на заглавную страницу всех курсов
+        return Redirect::action('CourseController@index')->with('message', $message);
+    }
 }
