@@ -3,6 +3,8 @@
 
 use Illuminate\Support\Facades\Input;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\View;
 use Yalms\Models\Courses\Course;
 
 class CourseController extends \BaseController

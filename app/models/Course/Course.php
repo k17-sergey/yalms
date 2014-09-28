@@ -1,4 +1,5 @@
 <?php
+use Yalms\Models\Courses\Course;
 
 /**
  * Class Course
@@ -6,7 +7,6 @@
  * @property integer        $id
  * @property string         $name
  * @method static Course find($id)
- * @method static Course paginate()
  * @method static Course delete()
  * @method static Course save()
  * @method static Course all()
@@ -17,7 +17,7 @@ namespace Yalms\Models\Courses;
 
 class Course extends \Eloquent {
 
-	protected $fillable = ['Name'];
+	protected $fillable = ['name'];
 
 	/**
 	 * The database table used by the model.
