@@ -1,6 +1,9 @@
 <?php
+namespace app\controllers\Api\User;
 
-class StudentController extends \BaseController
+use Response;
+
+class UserTeacherController extends \BaseController
 {
 
 	/**
@@ -10,18 +13,7 @@ class StudentController extends \BaseController
 	 */
 	public function index()
 	{
-
-		$paginate = Student::paginate(1);
-
-		return [
-			'items'  => $paginate->getItems(),
-			'paging' => [
-				'count' => $paginate->count(),
-				'last'  => $paginate->getLastPage(),
-				'per'   => $paginate->getPerPage(),
-				'total' => $paginate->getTotal(),
-			],
-		];
+		//
 	}
 
 
@@ -43,7 +35,7 @@ class StudentController extends \BaseController
 	 */
 	public function store()
 	{
-		return ['123' => '123'];
+		//
 	}
 
 
@@ -56,7 +48,7 @@ class StudentController extends \BaseController
 	 */
 	public function show($id)
 	{
-		return Student::find($id);
+		//
 	}
 
 

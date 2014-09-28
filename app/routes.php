@@ -11,11 +11,14 @@
 |
 */
 
-Route::get('/', function()
-{
+Route::get('/', function () {
 	return View::make('hello');
 });
 
 
 Route::resource('student', 'StudentController');
 Route::resource('teacher', 'TeacherController');
+
+Route::group(array('prefix' => 'api/v1'), function () {
+	Route::resource('user', 'app\controllers\Api\User\UserController');
+});
