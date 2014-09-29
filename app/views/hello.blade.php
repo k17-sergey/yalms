@@ -7,6 +7,7 @@
 	<title>YaLMS</title>
 </head>
 <body>
+	<nav>{{ link_to_route('course.index', 'Courses') }}</nav>
 	<div class="welcome">
         <img src="/images/logo.png">
 		<h1>Yet another LMS</h1>

@@ -26,6 +26,7 @@
 		],
 		"psr-4": {
 			"Yalms\\Models\\": "app/models",
+			"Yalms\\Component\\": "app/component",
 			"Yalms\\Tests\\": "app/tests"
 		}
 	},

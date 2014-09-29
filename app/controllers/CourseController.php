@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Input;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\View;
+use Yalms\Component\Course\CourseComponent;
 use Yalms\Models\Courses\Course;
 
 class CourseController extends \BaseController
@@ -17,15 +18,20 @@ class CourseController extends \BaseController
      */
     public function index()
     {
-        $courses = Course::all();
+        $courses =  CourseComponent::index($this);
+
         //Вполне возможна ситуация по которой мы пришли в этот контроллер
         //после редиректа от функции удаления.
         //Тогда у нас есть некое статусное сообщение($message),
         //которое необходимо отрисовать на странице.
-        $message = Session::get('message');
-        if (isset($message))
+
+        {
+            $message = Session::get('message');
+        }
+        if (isset($message)) {
             //Сообщение таки есть.Надо его показать пользователю
             return View::make('pages.course.index', compact('message', 'courses'));
+        }
 
         return View::make('pages.course.index')->with('courses', $courses);
     }
@@ -72,15 +78,16 @@ class CourseController extends \BaseController
     public function show($id)
     {
 
-        $course = Course::find($id);
+        $course = Course::findOrFail($id);
         //Вполне возможна ситуация по которой мы пришли в этот контроллер
         //после редиректа от функции создания или обновления.
         $message = Session::get('message');
         if (isset($message))
-            //Сообщение таки есть.Надо его показать пользователю
+        {
             return View::make('pages.course.show', compact('message', 'course'));
-        else
+        } else {
             return View::make('pages.course.show')->with('course', $course);
+        }
     }
 
 
@@ -95,6 +102,7 @@ class CourseController extends \BaseController
     {
         $url = URL::route('course.update', ['id' => $id]);
         $courseName = Course::find($id)->name;
+
         return View::make('pages.course.edit', compact('courseName', 'url'));
     }
 
@@ -108,7 +116,7 @@ class CourseController extends \BaseController
      */
     public function update($id)
     {
-        $course = Course::find($id);
+        $course = Course::findOrFail($id);
         $course->name = $courseName = Input::get('name');
         $course->save();
 
@@ -127,12 +135,13 @@ class CourseController extends \BaseController
      */
     public function destroy($id)
     {
-        $course = Course::find($id);
+        $course = Course::findOrFail($id);
         $courseName = $course->name;
 
         $course->delete();
 
         $message = 'Course ' . $courseName . ' been successful removed';
+
         //Отправим на заглавную страницу всех курсов
         return Redirect::action('CourseController@index')->with('message', $message);
     }
