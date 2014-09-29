@@ -18,7 +18,7 @@ class CourseController extends \BaseController
      */
     public function index()
     {
-        $courses =  CourseComponent::index($this);
+        $courses =  CourseComponent::index();
 
         //Вполне возможна ситуация по которой мы пришли в этот контроллер
         //после редиректа от функции удаления.
