@@ -4,7 +4,8 @@ composer.lock
 CONTRIBUTING.md
 readme.md
 .idea
-public/css
+public/css/*
+composer.phar
 app/config/local
 app/config/testing
 production
