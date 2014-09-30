@@ -1,15 +1,7 @@
-<?php
-use DebugBar\StandardDebugBar;
-
-$debugbar = new StandardDebugBar();
-$debugbarRenderer = $debugbar->getJavascriptRenderer();
-echo $debugbarRenderer->render();
-?>
 <html lang="en">
     <head>
-
-    {{ HTML::style('css/main.css'); }}
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js" ></script>
+        {{ HTML::script('js/jquery-2.1.1.js'); }}
+        {{ HTML::style('css/main.css'); }}
         <meta charset="UTF-8">
         <title>@yield('title')</title>
     </head>
