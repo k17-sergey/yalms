@@ -5,7 +5,6 @@ use Illuminate\Support\Facades\Input;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\View;
-use Yalms\Component\Course\CourseComponent;
 use Yalms\Models\Courses\Course;
 
 class CourseController extends \BaseController
@@ -18,7 +17,7 @@ class CourseController extends \BaseController
      */
     public function index()
     {
-        $courses =  CourseComponent::index();
+        $courses =  Course::get(array('name','id'));
 
         //Вполне возможна ситуация по которой мы пришли в этот контроллер
         //после редиректа от функции удаления.

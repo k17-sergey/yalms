@@ -3,7 +3,8 @@
 namespace app\controllers\Api\Course;
 use BaseController;
 use Response;
-use Yalms\Component\Course\CourseComponent;
+use Yalms\Models\Courses\Course;
+
 
 /**API-интерфейс на Course**/
 
@@ -14,7 +15,7 @@ class CourseController extends BaseController
 	//GET-request for get list courses
     public function index()
     {
-	    $courses = CourseComponent::index();
+	    $courses = Course::get(array('name','id'));
         return Response::json($courses);
     }
 
