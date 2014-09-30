@@ -1,13 +1,9 @@
 <?php
 namespace app\controllers\Api\User;
 
-use Input;
-use Request;
 use Response;
 use Yalms\Models\Users\User;
-use Yalms\Models\Users\UserAdmin;
-use Yalms\Models\Users\UserStudent;
-use Yalms\Models\Users\UserTeacher;
+use Yalms\Component\User\UserComponent;
 
 class UserController extends \BaseController
 {
@@ -19,15 +15,7 @@ class UserController extends \BaseController
 	 */
 	public function index()
 	{
-		$perPage = 30; //Количество строк на странице по умолчанию
-		if (Input::has('per_page')) {
-			$perPage = Input::get('per_page');
-		}
-
-		$users = User::whereEnabled('1')
-			->paginate($perPage, array('id', 'first_name', 'middle_name', 'last_name'));
-
-		return Response::json($users);
+		return Response::json(UserComponent::showUsers('1')); // Параметр означает условие запроса enabled=='1'
 	}
 
 
@@ -49,47 +37,12 @@ class UserController extends \BaseController
 	 */
 	public function store()
 	{
-		$phone = trim(Request::get('phone'));
-		if (empty($phone)) {
-			return [
-				'result'  => false,
-				'message' => 'Data has not been entered'
-			];
-		}
-
-		$countPhones = User::wherePhone($phone)->count();
-		if ($countPhones > 0) {
-			return [
-				'result'  => false,
-				'message' => 'This user already exists'
-			];
-		}
-
-		$user = new User;
-		$user->first_name = Input::get('first_name');
-		$user->middle_name = Input::get('middle_name');
-		$user->last_name = Input::get('last_name');
-		$user->email = Input::get('email');
-		$user->phone = Input::get('phone');
-		$user->password = Input::get('password');
-
-		$user->save();
-
-		$admin = new UserAdmin;
-		$admin->user_id = $user->id;
-		$admin->save();
-
-		$teacher = new UserTeacher;
-		$teacher->user_id = $user->id;
-		$teacher->save();
-
-		$student = new UserStudent;
-		$student->user_id = $user->id;
-		$student->save();
+		$userComp = new UserComponent;
+		$result = $userComp->storeNewUser();
 
 		return [
-			'result'  => true,
-			'message' => 'This user is saved'
+			'result'  => $result,
+			'message' => $userComp->message
 		];
 	}
 
