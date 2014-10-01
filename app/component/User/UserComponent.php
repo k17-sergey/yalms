@@ -106,6 +106,38 @@ class UserComponent
 		return true;
 	}
 
+
+	/**
+	 *  Обновление данных пользователя, с указанным id
+	 *
+	 * @param  int $id
+	 *
+	 * @return bool
+	 */
+	public function update($id)
+	{
+		$this->user = User::find($id);
+		if (empty($this->user->id)) {
+			$this->message = 'User not found';
+
+			return false;
+		}
+
+		$this->prepareToSave(array(
+				'first_name',
+				'middle_name',
+				'last_name',
+				'email',
+				'password'
+			)
+		);
+		$result = $this->user->save();
+		$this->message = ($result) ? 'Data saved successfully' : 'Failed to save data';
+
+		return $result;
+	}
+
+
 	/**
 	 * Заполнение принятых данных пользователя в модель БД
 	 *
@@ -119,5 +151,37 @@ class UserComponent
 			}
 		}
 	}
+
+	/**
+	 * Удаление пользователя из БД.
+	 *
+	 * @param  int $id
+	 *
+	 * @return bool
+	 */
+	public function destroy($id)
+	{
+		$this->user = User::find($id);
+		if (empty($this->user->id)) {
+			$this->message = 'User not found';
+
+			return false;
+		}
+
+		UserAdmin::destroy($id);
+		UserTeacher::destroy($id);
+		UserStudent::destroy($id);
+
+		try {
+			$result = $this->user->delete();
+			$this->message = ($result) ? 'Data deleted successfully' : 'Failed to delete data';
+		} catch (\Exception $error) {
+			$result = false;
+			$this->message = $error->getMessage();
+		}
+
+		return $result;
+	}
+
 
 } 

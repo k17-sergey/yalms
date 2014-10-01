@@ -28,7 +28,8 @@ use Illuminate\Auth\UserTrait;
  *
  * @method static User whereEnabled($boolean)
  * @method static User wherePhone($phone)
- * @method static User findOrFail($phone)
+ * @method static User findOrFail($id)
+ * @method static User find($id)
  * @method static User first()
  *
  */

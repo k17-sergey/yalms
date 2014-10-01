@@ -85,7 +85,14 @@ class UserController extends \BaseController
 	 */
 	public function update($id)
 	{
-		//
+		$userComponent = new UserComponent();
+		$result = $userComponent->update($id);
+
+		return Response::json(array(
+				'result'  => $result,
+				'message' => $userComponent->message
+			)
+		);
 	}
 
 
@@ -98,7 +105,13 @@ class UserController extends \BaseController
 	 */
 	public function destroy($id)
 	{
-		//
+		$userComponent = new UserComponent();
+
+		return Response::json(array(
+				'result'  => $userComponent->destroy($id),
+				'message' => $userComponent->message
+			)
+		);
 	}
 
 
