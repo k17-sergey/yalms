@@ -13,6 +13,7 @@ use Yalms\Models\Courses\Course;
  * @property Course[]  $courses
  *
  * @method static UserTeacher first
+ * @method static UserTeacher find($id)
  */
 class UserTeacher extends Eloquent
 {

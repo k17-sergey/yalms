@@ -184,4 +184,89 @@ class UserComponent
 	}
 
 
+	/**
+	 *  Обновление данных профиля пользователя "Admin", с указанным id
+	 *
+	 * @param  int $id
+	 *
+	 * @return bool
+	 */
+	public function updateAdmin($id)
+	{
+		$admin = UserAdmin::find($id);
+		if (empty($admin->user_id)) {
+			$this->message = 'User not found';
+
+			return false;
+		}
+
+		if (Input::has('enabled')) {
+			$admin->enabled = Input::get('enabled', '0');
+			$result = $admin->save();
+			$this->message = ($result) ? 'Data saved successfully' : 'Failed to save data';
+		} else {
+			$result = false;
+			$this->message = 'No input data';
+		}
+
+		return $result;
+	}
+
+	/**
+	 *  Обновление данных профиля пользователя "студент", с указанным id
+	 *
+	 * @param  int $id
+	 *
+	 * @return bool
+	 */
+	public function updateStudent($id)
+	{
+		$student = UserStudent::find($id);
+		if (empty($student->user_id)) {
+			$this->message = 'User not found';
+
+			return false;
+		}
+
+		if (Input::has('enabled')) {
+			$student->enabled = Input::get('enabled', '0');
+			$result = $student->save();
+			$this->message = ($result) ? 'Data saved successfully' : 'Failed to save data';
+		} else {
+			$result = false;
+			$this->message = 'No input data';
+		}
+
+		return $result;
+	}
+
+	/**
+	 *  Обновление данных профиля пользователя "учитель", с указанным id
+	 *
+	 * @param  int $id
+	 *
+	 * @return bool
+	 */
+	public function updateTeacher($id)
+	{
+		$teacher = UserTeacher::find($id);
+		if (empty($teacher->user_id)) {
+			$this->message = 'User not found';
+
+			return false;
+		}
+
+		if (Input::has('enabled')) {
+			$teacher->enabled = Input::get('enabled', '0');
+			$result = $teacher->save();
+			$this->message = ($result) ? 'Data saved successfully' : 'Failed to save data';
+		} else {
+			$result = false;
+			$this->message = 'No input data';
+		}
+
+		return $result;
+	}
+
+
 } 

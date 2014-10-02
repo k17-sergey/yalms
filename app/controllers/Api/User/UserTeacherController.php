@@ -2,6 +2,8 @@
 namespace app\controllers\Api\User;
 
 use Response;
+use Yalms\Component\User\UserComponent;
+use Yalms\Models\Users\UserTeacher;
 
 class UserTeacherController extends \BaseController
 {
@@ -24,7 +26,10 @@ class UserTeacherController extends \BaseController
 	 */
 	public function create()
 	{
-		//
+		return Response::json(
+			array('Status' => 404, 'Message' => 'Not Found'),
+			404
+		);
 	}
 
 
@@ -35,7 +40,10 @@ class UserTeacherController extends \BaseController
 	 */
 	public function store()
 	{
-		//
+		return Response::json(
+			array('Status' => 404, 'Message' => 'Not Found'),
+			404
+		);
 	}
 
 
@@ -48,7 +56,16 @@ class UserTeacherController extends \BaseController
 	 */
 	public function show($id)
 	{
-		//
+		$teacher = UserTeacher::find($id, array('user_id', 'enabled'));
+
+		if (empty($teacher->user_id)) {
+			return Response::json(
+				array(),
+				204 //No Content
+			);
+		}
+
+		return Response::json(['enabled' => $teacher->enabled]);
 	}
 
 
@@ -74,20 +91,28 @@ class UserTeacherController extends \BaseController
 	 */
 	public function update($id)
 	{
-		//
+		$userComponent = new UserComponent;
+
+		return Response::json(array(
+				'result'  => $userComponent->updateTeacher($id),
+				'message' => $userComponent->message
+			)
+		);
 	}
 
 
 	/**
 	 * Remove the specified resource from storage.
 	 *
-	 * @param  int $id
 	 *
 	 * @return Response
 	 */
-	public function destroy($id)
+	public function destroy()
 	{
-		//
+		return Response::json(
+			array('Status' => 404, 'Message' => 'Not Found'),
+			404
+		);
 	}
 
 

@@ -10,6 +10,8 @@ use Eloquent;
  * @property integer $user_id
  * @property boolean $enabled
  *
+ * @method static UserAdmin find($id)
+ *
  */
 class UserAdmin extends Eloquent
 {
