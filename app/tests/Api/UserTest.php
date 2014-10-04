@@ -36,6 +36,7 @@ class UserTest extends TestCase
 			'first_name' => 'Стас',
 			'last_name'  => 'Михайлов',
 			'phone'      => '79100000000',
+			'password' => '123',
 		]);
 
 		$user = User::first();
