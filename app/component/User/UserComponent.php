@@ -6,6 +6,7 @@ use Yalms\Models\Users\User;
 use Yalms\Models\Users\UserAdmin;
 use Yalms\Models\Users\UserStudent;
 use Yalms\Models\Users\UserTeacher;
+use DB;
 
 
 class UserComponent
@@ -168,16 +169,34 @@ class UserComponent
 			return false;
 		}
 
-		UserAdmin::destroy($id);
-		UserTeacher::destroy($id);
-		UserStudent::destroy($id);
+		$activeConnection = DB::connection();
+		$activeConnection->beginTransaction();
 
 		try {
+			$isChanged = false;
+			if (isset($this->user->admin->enabled) && $this->user->admin->enabled) {
+				$this->user->admin->enabled = false;
+				$isChanged = true;
+			}
+			if (isset($this->user->teacher->enabled) && $this->user->teacher->enabled) {
+				$this->user->teacher->enabled = false;
+				$isChanged = true;
+			}
+			if (isset($this->user->student->enabled) && $this->user->student->enabled) {
+				$this->user->student->enabled = false;
+				$isChanged = true;
+			}
+			if ($isChanged) {
+				$this->user->push();
+			}
+
 			$result = $this->user->delete();
 			$this->message = ($result) ? 'Data deleted successfully' : 'Failed to delete data';
+			$activeConnection->commit();
 		} catch (\Exception $error) {
 			$result = false;
 			$this->message = $error->getMessage();
+			$activeConnection->rollBack();
 		}
 
 		return $result;
