@@ -7,6 +7,7 @@ use Yalms\Models\Users\UserAdmin;
 use Yalms\Models\Users\UserStudent;
 use Yalms\Models\Users\UserTeacher;
 use DB;
+use Validator;
 
 
 class UserComponent
@@ -15,12 +16,44 @@ class UserComponent
 	/**
 	 * @var null|User
 	 */
-	private $user = null;
+	public $user = null;
 
 	/**
-	 * @var string Сообщение о результате выполненных операций
+	 * Принятые данные запроса
+	 *
+	 * @var array
+	 */
+	private $input = array();
+
+	public function __construct($input = null)
+	{
+		$this->input = empty($input) ? array() : $input;
+	}
+
+	/**
+	 * @var string|array Сообщение о результате выполненных операций
 	 */
 	public $message = '';
+
+	/**
+	 * Статус результата
+	 *
+	 * @var int
+	 */
+	public $status = 0;
+
+	/**
+	 * Сообщения об ошибках при проверке данных
+	 *
+	 * @var array
+	 */
+	private $errorMessages = array(
+		'required'   => 'Поле должно быть заполнено обязательно!',
+		'unique'     => ':attribute с таким значением уже есть.',
+		'email'      => 'Должен быть корректный адрес электронной почты.',
+		'alpha_dash' => 'Должны быть только латинские символы, цифры, знаки подчёркивания (_) и дефисы (-).',
+		'confirmed'  => 'Пароли не совпадают.'
+	);
 
 	/**
 	 * Выдает список пользователей,
@@ -58,28 +91,23 @@ class UserComponent
 	 */
 	public function storeNewUser()
 	{
-		$phone = trim(Input::get('phone'));
-		if (empty($phone)) {
-			$this->message = 'Important data has not been entered';
-
-			return false;
-		}
-
-		$countPhones = User::wherePhone($phone)->count();
-		if ($countPhones > 0) {
-			$this->message = 'This user already exists';
-
-			return false;
-		}
-
-		if (!Input::has('password')) {
-			$this->message = 'Have not received a password';
+		$validator = Validator::make(
+			$this->input,
+			array(
+				'phone'    => 'required|unique:users',
+				'email'    => 'email',
+				'password' => 'required|alpha_dash|confirmed'
+			),
+			$this->errorMessages
+		);
+		if ($validator->fails()) {
+			$this->message = $validator->messages();
 
 			return false;
 		}
 
 		$this->user = new User;
-		$this->user->phone = $phone;
+		$this->user->phone = $this->input['phone'];
 		$this->prepareToSave(array(
 				'first_name',
 				'middle_name',
@@ -88,23 +116,37 @@ class UserComponent
 				'password'
 			)
 		);
-		$this->user->save();
 
-		$admin = new UserAdmin;
-		$admin->user_id = $this->user->id;
-		$admin->save();
+		$activeConnection = DB::connection();
+		$activeConnection->beginTransaction();
 
-		$teacher = new UserTeacher;
-		$teacher->user_id = $this->user->id;
-		$teacher->save();
+		if ($this->user->save()) {
+			$isSaved = true;
 
-		$student = new UserStudent;
-		$student->user_id = $this->user->id;
-		$student->save();
+			$admin = new UserAdmin;
+			$admin->user_id = $this->user->id;
+			$isSaved &= $admin->save();
 
-		$this->message = 'This user is saved';
+			$teacher = new UserTeacher;
+			$teacher->user_id = $this->user->id;
+			$isSaved &= $teacher->save();
 
-		return true;
+			$student = new UserStudent;
+			$student->user_id = $this->user->id;
+			$isSaved &= $student->save();
+
+			if ($isSaved) {
+				$activeConnection->commit();
+				$this->message = 'This user is saved';
+
+				return true;
+			}
+		}
+
+		$activeConnection->rollBack();
+		$this->message = 'This user is not saved';
+
+		return false;
 	}
 
 
@@ -120,6 +162,21 @@ class UserComponent
 		$this->user = User::find($id);
 		if (empty($this->user->id)) {
 			$this->message = 'User not found';
+			$this->status = 404;
+
+			return false;
+		}
+
+		$validator = Validator::make(
+			$this->input,
+			array(
+				'email'    => 'email',
+				'password' => 'alpha_dash|confirmed'
+			),
+			$this->errorMessages
+		);
+		if ($validator->fails()) {
+			$this->message = $validator->messages();
 
 			return false;
 		}
@@ -147,8 +204,8 @@ class UserComponent
 	private function prepareToSave($fields = array())
 	{
 		foreach ($fields as $field) {
-			if (Input::has($field)) {
-				$this->user->$field = Input::get($field);
+			if (!empty($this->input[$field])) {
+				$this->user->$field = $this->input[$field];
 			}
 		}
 	}
