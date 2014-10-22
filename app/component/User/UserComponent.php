@@ -120,31 +120,35 @@ class UserComponent
 		$activeConnection = DB::connection();
 		$activeConnection->beginTransaction();
 
-		if ($this->user->save()) {
-			$isSaved = true;
+		try {
+			if ($this->user->save()) {
+				$isSaved = true;
 
-			$admin = new UserAdmin;
-			$admin->user_id = $this->user->id;
-			$isSaved &= $admin->save();
+				$admin = new UserAdmin;
+				$admin->user_id = $this->user->id;
+				$isSaved &= $admin->save();
 
-			$teacher = new UserTeacher;
-			$teacher->user_id = $this->user->id;
-			$isSaved &= $teacher->save();
+				$teacher = new UserTeacher;
+				$teacher->user_id = $this->user->id;
+				$isSaved &= $teacher->save();
 
-			$student = new UserStudent;
-			$student->user_id = $this->user->id;
-			$isSaved &= $student->save();
+				$student = new UserStudent;
+				$student->user_id = $this->user->id;
+				$isSaved &= $student->save();
 
-			if ($isSaved) {
-				$activeConnection->commit();
-				$this->message = 'This user is saved';
+				if ($isSaved) {
+					$activeConnection->commit();
+					$this->message = 'This user is saved';
 
-				return true;
+					return true;
+				}
 			}
+			$activeConnection->rollBack();
+			$this->message = 'This user is not saved';
+		} catch (\Exception $error) {
+			$this->message = $error->getMessage();
+			$activeConnection->rollBack();
 		}
-
-		$activeConnection->rollBack();
-		$this->message = 'This user is not saved';
 
 		return false;
 	}
@@ -303,15 +307,23 @@ class UserComponent
 
 			return false;
 		}
+		$validator = Validator::make(
+			$this->input,
+			array('enabled' => 'required|in:0,1'),
+			array(
+				'required' => 'Поле должно быть заполнено обязательно!',
+				'in'       => 'Введено некорректное значение.'
+			)
+		);
+		if ($validator->fails()) {
+			$this->message = $validator->errors();
 
-		if (Input::has('enabled')) {
-			$student->enabled = Input::get('enabled', '0');
-			$result = $student->save();
-			$this->message = ($result) ? 'Data saved successfully' : 'Failed to save data';
-		} else {
-			$result = false;
-			$this->message = 'No input data';
+			return false;
 		}
+
+		$student->enabled = $this->input['enabled'];
+		$result = $student->save();
+		$this->message = ($result) ? 'Data saved successfully' : 'Failed to save data';
 
 		return $result;
 	}

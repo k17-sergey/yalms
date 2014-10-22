@@ -4,6 +4,8 @@ namespace app\controllers\Api\User;
 use Response;
 use Yalms\Component\User\UserComponent;
 use Yalms\Models\Users\UserStudent;
+use Yalms\Models\Users\User;
+use Input;
 
 class UserStudentController extends \BaseController
 {
@@ -57,15 +59,26 @@ class UserStudentController extends \BaseController
 	public function show($id)
 	{
 		$student = UserStudent::find($id, array('user_id', 'enabled'));
+		$user = User::find(
+			$id,
+			array('id', 'first_name', 'middle_name', 'last_name', 'email', 'phone')
+		);
 
-		if (empty($student->user_id)) {
+		if (empty($student->user_id) || empty($user->id)) {
 			return Response::json(
-				array(),
-				204 //No Content
+				array('Status' => 404, 'Message' => 'Not Found'),
+				404
 			);
 		}
 
-		return Response::json(['enabled' => $student->enabled]);
+
+		return Response::json([
+			'student' => array(
+				'id'      => $student->user_id,
+				'enabled' => $student->enabled
+			),
+			'user'    => $user
+		]);
 	}
 
 
@@ -91,10 +104,15 @@ class UserStudentController extends \BaseController
 	 */
 	public function update($id)
 	{
-		$userComponent = new UserComponent;
+		$userComponent = new UserComponent(Input::all());
+		$result = $userComponent->updateStudent($id);
+
+		if ($result) {
+			return $this->show($id);
+		}
 
 		return Response::json(array(
-				'result'  => $userComponent->updateStudent($id),
+				'result' => false,
 				'message' => $userComponent->message
 			)
 		);

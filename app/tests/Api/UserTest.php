@@ -37,7 +37,9 @@ class UserTest extends TestCase
 			'last_name'  => 'Михайлов',
 			'phone'      => '79100000000',
 			'password' => '123',
+			'password_confirmation' => '123',
 		]);
+		$this->assertResponseStatus(201);
 
 		$user = User::first();
 		$this->assertEquals(1, $user->id);
