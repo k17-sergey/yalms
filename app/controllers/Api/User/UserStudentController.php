@@ -109,7 +109,8 @@ class UserStudentController extends \BaseController
 				'enabled' => UserStudent::find($id)->enabled,
 				'user'    => $user
 			),
-			'fields'  => array('enabled' => 'Назначить студентом')
+			'edit_fields'     => array('enabled' => 'Назначить студентом'),
+			'required_fields' => array('enabled')
 		));
 	}
 

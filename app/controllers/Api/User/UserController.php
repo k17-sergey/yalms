@@ -30,7 +30,24 @@ class UserController extends \BaseController
 	 */
 	public function create()
 	{
-		//
+
+		return Response::json(array(
+			'edit_fields'     => array(
+				'last_name'             => 'Фамилия',
+				'first_name'            => 'Имя',
+				'middle_name'           => 'Отчество',
+				'email'                 => 'Электронная почта',
+				'phone'                 => 'Номер телефона',
+				'password'              => 'Пароль',
+				'password_confirmation' => 'Подтверждение пароля'
+			),
+			'required_fields' => array(
+				'first_name',
+				'phone',
+				'password',
+				'password_confirmation'
+			)
+		));
 	}
 
 

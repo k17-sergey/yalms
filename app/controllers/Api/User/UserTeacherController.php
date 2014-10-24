@@ -108,7 +108,8 @@ class UserTeacherController extends \BaseController
 				'enabled' => UserTeacher::find($id)->enabled,
 				'user'    => $user
 			),
-			'fields'  => array('enabled' => 'Назначить учителем')
+			'edit_fields'     => array('enabled' => 'Назначить учителем'),
+			'required_fields' => array('enabled')
 		));
 	}
 
