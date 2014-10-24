@@ -29,8 +29,8 @@ class UserStudentController extends \BaseController
 	public function create()
 	{
 		return Response::json(
-			array('Status' => 404, 'Message' => 'Not Found'),
-			404
+			array('Status' => 403, 'Message' => 'Forbidden'),
+			403
 		);
 	}
 
@@ -43,8 +43,8 @@ class UserStudentController extends \BaseController
 	public function store()
 	{
 		return Response::json(
-			array('Status' => 404, 'Message' => 'Not Found'),
-			404
+			array('Status' => 403, 'Message' => 'Forbidden'),
+			403
 		);
 	}
 
@@ -61,7 +61,7 @@ class UserStudentController extends \BaseController
 		$student = UserStudent::find($id, array('user_id', 'enabled'));
 		$user = User::find(
 			$id,
-			array('id', 'first_name', 'middle_name', 'last_name', 'email', 'phone')
+			array('id', 'first_name', 'middle_name', 'last_name')
 		);
 
 		if (empty($student->user_id) || empty($user->id)) {
@@ -114,7 +114,8 @@ class UserStudentController extends \BaseController
 		return Response::json(array(
 				'result' => false,
 				'message' => $userComponent->message
-			)
+			),
+			$userComponent->status
 		);
 	}
 
@@ -128,8 +129,8 @@ class UserStudentController extends \BaseController
 	public function destroy()
 	{
 		return Response::json(
-			array('Status' => 404, 'Message' => 'Not Found'),
-			404
+			array('Status' => 403, 'Message' => 'Forbidden'),
+			403
 		);
 	}
 

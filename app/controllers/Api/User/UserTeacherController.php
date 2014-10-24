@@ -4,6 +4,8 @@ namespace app\controllers\Api\User;
 use Response;
 use Yalms\Component\User\UserComponent;
 use Yalms\Models\Users\UserTeacher;
+use Yalms\Models\Users\User;
+use Input;
 
 class UserTeacherController extends \BaseController
 {
@@ -27,8 +29,8 @@ class UserTeacherController extends \BaseController
 	public function create()
 	{
 		return Response::json(
-			array('Status' => 404, 'Message' => 'Not Found'),
-			404
+			array('Status' => 403, 'Message' => 'Forbidden'),
+			403
 		);
 	}
 
@@ -41,8 +43,8 @@ class UserTeacherController extends \BaseController
 	public function store()
 	{
 		return Response::json(
-			array('Status' => 404, 'Message' => 'Not Found'),
-			404
+			array('Status' => 403, 'Message' => 'Forbidden'),
+			403
 		);
 	}
 
@@ -57,15 +59,26 @@ class UserTeacherController extends \BaseController
 	public function show($id)
 	{
 		$teacher = UserTeacher::find($id, array('user_id', 'enabled'));
+		$user = User::find(
+			$id,
+			array('id', 'first_name', 'middle_name', 'last_name')
+		);
 
-		if (empty($teacher->user_id)) {
+		if (empty($teacher->user_id) || empty($user->id)) {
 			return Response::json(
-				array(),
-				204 //No Content
+				array('Status' => 404, 'Message' => 'Not Found'),
+				404
 			);
 		}
 
-		return Response::json(['enabled' => $teacher->enabled]);
+		return Response::json(array(
+				'teacher' => array(
+					'id'      => $id,
+					'enabled' => $teacher->enabled
+				),
+				'user'    => $user
+			)
+		);
 	}
 
 
@@ -91,12 +104,17 @@ class UserTeacherController extends \BaseController
 	 */
 	public function update($id)
 	{
-		$userComponent = new UserComponent;
+		$userComponent = new UserComponent(Input::all());
+		$result = $userComponent->updateTeacher($id);
+		if ($result) {
+			return $this->show($id);
+		}
 
 		return Response::json(array(
-				'result'  => $userComponent->updateTeacher($id),
+				'result' => false,
 				'message' => $userComponent->message
-			)
+			),
+			$userComponent->status
 		);
 	}
 
@@ -110,8 +128,8 @@ class UserTeacherController extends \BaseController
 	public function destroy()
 	{
 		return Response::json(
-			array('Status' => 404, 'Message' => 'Not Found'),
-			404
+			array('Status' => 403, 'Message' => 'Forbidden'),
+			403
 		);
 	}
 

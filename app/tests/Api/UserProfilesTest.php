@@ -56,4 +56,57 @@ class UserProfilesTest extends TestCase
 
 	}
 
+	/**
+	 * Запрещенные запросы на создание и удаление профилей пользователя
+	 */
+	public function testProhibitedStudentCreateCall()
+	{
+		$this->call('GET',
+			"api/v1/student/create"
+		);
+		$this->assertResponseStatus(403);
+	}
+
+	public function testProhibitedStudentStoreCall()
+	{
+		$this->call('POST',
+			"api/v1/student",
+			['enabled' => 0]
+		);
+		$this->assertResponseStatus(403);
+	}
+
+	public function testProhibitedStudentDeleteCall()
+	{
+		$this->call('DELETE',
+			"api/v1/student/{$this->userId}"
+		);
+		$this->assertResponseStatus(403);
+	}
+
+	public function testProhibitedTeacherCreateCall()
+	{
+		$this->call('GET',
+			"api/v1/teacher/create"
+		);
+		$this->assertResponseStatus(403);
+	}
+
+	public function testProhibitedTeacherStoreCall()
+	{
+		$this->call('POST',
+			"api/v1/teacher",
+			['enabled' => 0]
+		);
+		$this->assertResponseStatus(403);
+	}
+
+	public function testProhibitedTeacherDeleteCall()
+	{
+		$this->call('DELETE',
+			"api/v1/teacher/{$this->userId}"
+		);
+		$this->assertResponseStatus(403);
+	}
+
 }

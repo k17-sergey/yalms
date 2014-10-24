@@ -40,7 +40,7 @@ class UserComponent
 	 *
 	 * @var int
 	 */
-	public $status = 0;
+	public $status = 200;
 
 	/**
 	 * Сообщения об ошибках при проверке данных
@@ -185,7 +185,7 @@ class UserComponent
 			return false;
 		}
 
-		$this->prepareToSave(array(
+		$areThereData = $this->prepareToSave(array(
 				'first_name',
 				'middle_name',
 				'last_name',
@@ -193,25 +193,14 @@ class UserComponent
 				'password'
 			)
 		);
+		if (!$areThereData) {
+			return false;
+		}
+
 		$result = $this->user->save();
 		$this->message = ($result) ? 'Data saved successfully' : 'Failed to save data';
 
 		return $result;
-	}
-
-
-	/**
-	 * Заполнение принятых данных пользователя в модель БД
-	 *
-	 * @param array $fields
-	 */
-	private function prepareToSave($fields = array())
-	{
-		foreach ($fields as $field) {
-			if (!empty($this->input[$field])) {
-				$this->user->$field = $this->input[$field];
-			}
-		}
 	}
 
 	/**
@@ -265,6 +254,34 @@ class UserComponent
 
 
 	/**
+	 * Заполнение принятых данных пользователя в модель БД
+	 *
+	 * @param array $fields
+	 *
+	 * @return bool
+	 */
+	private function prepareToSave($fields = array())
+	{
+		$areThereData = false;
+		foreach ($fields as $field) {
+			if (!empty($this->input[$field])) {
+				$this->user->$field = $this->input[$field];
+				$areThereData = true;
+			}
+		}
+		if (!$areThereData) {
+			$this->message = 'No required data.';
+		}
+
+		return $areThereData;
+	}
+
+
+	//*********************************
+	// Профайлы пользователя
+	//*********************************
+
+	/**
 	 *  Обновление данных профиля пользователя "Admin", с указанным id
 	 *
 	 * @param  int $id
@@ -275,19 +292,18 @@ class UserComponent
 	{
 		$admin = UserAdmin::find($id);
 		if (empty($admin->user_id)) {
-			$this->message = 'User not found';
+			$this->message = 'Admin not found';
+			$this->status = 404;
 
 			return false;
 		}
-
-		if (Input::has('enabled')) {
-			$admin->enabled = Input::get('enabled', '0');
-			$result = $admin->save();
-			$this->message = ($result) ? 'Data saved successfully' : 'Failed to save data';
-		} else {
-			$result = false;
-			$this->message = 'No input data';
+		if (!$this->validateProfile()) {
+			return false;
 		}
+
+		$admin->enabled = $this->input['enabled'];
+		$result = $admin->save();
+		$this->message = ($result) ? 'Data saved successfully' : 'Failed to save data';
 
 		return $result;
 	}
@@ -303,21 +319,12 @@ class UserComponent
 	{
 		$student = UserStudent::find($id);
 		if (empty($student->user_id)) {
-			$this->message = 'User not found';
+			$this->message = 'Student not found';
+			$this->status = 404;
 
 			return false;
 		}
-		$validator = Validator::make(
-			$this->input,
-			array('enabled' => 'required|in:0,1'),
-			array(
-				'required' => 'Поле должно быть заполнено обязательно!',
-				'in'       => 'Введено некорректное значение.'
-			)
-		);
-		if ($validator->fails()) {
-			$this->message = $validator->errors();
-
+		if (!$this->validateProfile()) {
 			return false;
 		}
 
@@ -339,21 +346,39 @@ class UserComponent
 	{
 		$teacher = UserTeacher::find($id);
 		if (empty($teacher->user_id)) {
-			$this->message = 'User not found';
+			$this->message = 'Teacher not found';
+			$this->status = 404;
+
+			return false;
+		}
+		if (!$this->validateProfile()) {
+			return false;
+		}
+
+		$teacher->enabled = $this->input['enabled'];
+		$result = $teacher->save();
+		$this->message = ($result) ? 'Data saved successfully' : 'Failed to save data';
+
+		return $result;
+	}
+
+	private function validateProfile()
+	{
+		$validator = Validator::make(
+			$this->input,
+			array('enabled' => 'required|in:0,1'),
+			array(
+				'required' => 'Поле должно быть заполнено обязательно!',
+				'in'       => 'Введено некорректное значение.'
+			)
+		);
+		if ($validator->fails()) {
+			$this->message = $validator->errors();
 
 			return false;
 		}
 
-		if (Input::has('enabled')) {
-			$teacher->enabled = Input::get('enabled', '0');
-			$result = $teacher->save();
-			$this->message = ($result) ? 'Data saved successfully' : 'Failed to save data';
-		} else {
-			$result = false;
-			$this->message = 'No input data';
-		}
-
-		return $result;
+		return true;
 	}
 
 
