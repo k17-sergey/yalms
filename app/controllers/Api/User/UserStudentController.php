@@ -95,7 +95,22 @@ class UserStudentController extends \BaseController
 	 */
 	public function edit($id)
 	{
-		//
+		$user = User::whereEnabled(true)->find($id, array('id', 'first_name', 'middle_name', 'last_name'));
+		if (empty($user->id)) {
+			return Response::json(
+				array('Status' => 404, 'Message' => 'Not Found'),
+				404
+			);
+		}
+
+		return Response::json(array(
+			'student' => array(
+				'id'      => $id,
+				'enabled' => UserStudent::find($id)->enabled,
+				'user'    => $user
+			),
+			'fields'  => array('enabled' => 'Назначить студентом')
+		));
 	}
 
 
@@ -108,6 +123,14 @@ class UserStudentController extends \BaseController
 	 */
 	public function update($id)
 	{
+		$user = User::whereEnabled(true)->find($id);
+		if (empty($user->id)) {
+			return Response::json(
+				array('Status' => 404, 'Message' => 'Not Found'),
+				404
+			);
+		}
+
 		$userComponent = new UserComponent(Input::all());
 		$result = $userComponent->updateStudent($id);
 
