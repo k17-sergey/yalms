@@ -12,6 +12,7 @@ use Eloquent;
  *
  * @method static UserStudent first
  * @method static UserStudent find($id) first
+ * @method static UserStudent whereEnabled($boolean)
  */
 class UserStudent extends Eloquent
 {
@@ -24,5 +25,12 @@ class UserStudent extends Eloquent
 	 */
 	protected $primaryKey = 'user_id';
 
+	/**
+	 * @return User
+	 */
+	public function user()
+	{
+		return $this->belongsTo(User::class);
+	}
 
 }

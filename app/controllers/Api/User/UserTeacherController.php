@@ -17,7 +17,20 @@ class UserTeacherController extends \BaseController
 	 */
 	public function index()
 	{
-		//
+		//Количество строк на странице по умолчанию
+		$perPage = 30;
+		if (Input::has('per_page')) {
+			$perPage = Input::get('per_page');
+		}
+
+		$teacher = UserTeacher::whereEnabled(1)->with(array(
+					'user' => function ($query) {
+							$query->whereEnabled(true);
+						}
+				)
+			)->paginate($perPage);
+
+		return Response::json($teacher);
 	}
 
 
@@ -58,11 +71,8 @@ class UserTeacherController extends \BaseController
 	 */
 	public function show($id)
 	{
-		$teacher = UserTeacher::find($id, array('user_id', 'enabled'));
-		$user = User::find(
-			$id,
-			array('id', 'first_name', 'middle_name', 'last_name')
-		);
+		$teacher = UserTeacher::with('user')->find($id, array('user_id', 'enabled'));
+		$user = User::whereEnabled(true)->find($id);
 
 		if (empty($teacher->user_id) || empty($user->id)) {
 			return Response::json(
@@ -71,14 +81,7 @@ class UserTeacherController extends \BaseController
 			);
 		}
 
-		return Response::json(array(
-				'teacher' => array(
-					'id'      => $id,
-					'enabled' => $teacher->enabled
-				),
-				'user'    => $user
-			)
-		);
+		return Response::json(['teacher' => $teacher]);
 	}
 
 

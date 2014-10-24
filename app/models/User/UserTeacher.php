@@ -14,6 +14,7 @@ use Yalms\Models\Courses\Course;
  *
  * @method static UserTeacher first
  * @method static UserTeacher find($id)
+ * @method static UserTeacher whereEnabled($boolean)
  */
 class UserTeacher extends Eloquent
 {
@@ -29,6 +30,14 @@ class UserTeacher extends Eloquent
 	public function courses()
 	{
 		return $this->hasMany(Course::class, 'user_teacher_id');
+	}
+
+	/**
+	 * @return User
+	 */
+	public function user()
+	{
+		return $this->belongsTo(User::class);
 	}
 
 

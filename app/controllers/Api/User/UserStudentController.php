@@ -17,7 +17,20 @@ class UserStudentController extends \BaseController
 	 */
 	public function index()
 	{
-		//
+		//Количество строк на странице по умолчанию
+		$perPage = 30;
+		if (Input::has('per_page')) {
+			$perPage = Input::get('per_page');
+		}
+
+		$student = UserStudent::whereEnabled(1)->with(array(
+					'user' => function ($query) {
+							$query->whereEnabled(true);
+						}
+				)
+			)->paginate($perPage);
+
+		return Response::json($student);
 	}
 
 
@@ -58,11 +71,8 @@ class UserStudentController extends \BaseController
 	 */
 	public function show($id)
 	{
-		$student = UserStudent::find($id, array('user_id', 'enabled'));
-		$user = User::find(
-			$id,
-			array('id', 'first_name', 'middle_name', 'last_name')
-		);
+		$student = UserStudent::with('user')->find($id, array('user_id', 'enabled'));
+		$user = User::whereEnabled(true)->find($id);
 
 		if (empty($student->user_id) || empty($user->id)) {
 			return Response::json(
@@ -72,13 +82,7 @@ class UserStudentController extends \BaseController
 		}
 
 
-		return Response::json([
-			'student' => array(
-				'id'      => $student->user_id,
-				'enabled' => $student->enabled
-			),
-			'user'    => $user
-		]);
+		return Response::json(['student' => $student]);
 	}
 
 
