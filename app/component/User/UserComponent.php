@@ -74,11 +74,19 @@ class UserComponent
 		}
 
 		$users = null;
+		$sortingColumn = 'updated_at';
+		$direction = 'desc';
 		if ($controlEnabled == 'all') {
-			$users = User::paginate($perPage, array('id', 'first_name', 'middle_name', 'last_name'));
+			$users = User::with('teacher', 'student', 'admin')->orderBy($sortingColumn, $direction)->paginate(
+					$perPage,
+					array('id', 'first_name', 'middle_name', 'last_name', 'created_at', 'updated_at')
+				);
 		} elseif ($controlEnabled == '1' || $controlEnabled == '0') {
-			$users = User::whereEnabled($controlEnabled)
-				->paginate($perPage, array('id', 'first_name', 'middle_name', 'last_name'));
+			$users = User::with('teacher', 'student', 'admin')->whereEnabled($controlEnabled)
+				->orderBy($sortingColumn, $direction)->paginate(
+					$perPage,
+					array('id', 'first_name', 'middle_name', 'last_name', 'created_at', 'updated_at')
+				);
 		}
 
 		return $users;

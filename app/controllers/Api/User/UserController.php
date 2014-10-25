@@ -87,9 +87,10 @@ class UserController extends \BaseController
 	 */
 	public function show($id)
 	{
-		$user = User::findOrFail($id, array('id', 'first_name', 'middle_name', 'last_name', 'email', 'phone'));
+		$user = User::with('teacher', 'student', 'admin')
+			->findOrFail($id, array('id', 'first_name', 'middle_name', 'last_name', 'email', 'phone'));
 
-		return Response::json($user);
+		return Response::json(['user' => $user]);
 	}
 
 

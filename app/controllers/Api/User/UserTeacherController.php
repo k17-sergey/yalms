@@ -23,12 +23,14 @@ class UserTeacherController extends \BaseController
 			$perPage = Input::get('per_page');
 		}
 
+		$sortingColumn = 'updated_at';
+		$direction = 'desc';
 		$teacher = UserTeacher::whereEnabled(1)->with(array(
 					'user' => function ($query) {
 							$query->whereEnabled(true);
 						}
 				)
-			)->paginate($perPage);
+			)->orderBy($sortingColumn, $direction)->paginate($perPage);
 
 		return Response::json($teacher);
 	}
