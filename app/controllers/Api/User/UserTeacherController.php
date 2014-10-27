@@ -6,6 +6,7 @@ use Yalms\Component\User\UserComponent;
 use Yalms\Models\Users\UserTeacher;
 use Yalms\Models\Users\User;
 use Input;
+use Validator;
 
 class UserTeacherController extends \BaseController
 {
@@ -13,24 +14,48 @@ class UserTeacherController extends \BaseController
 	/**
 	 * Display a listing of the resource.
 	 *
+	 * Параметры:
+	 *      page — N страницы,
+	 *      per_page — количество на странице.
+	 *      sort = created|updated   Сортировка по полю  "created_at" или "updated_at", по умолчанию "created"
+	 *      direction = asc|desc     Направление сортировки, по умолчанию "desc"
+	 *
 	 * @return Response
 	 */
 	public function index()
 	{
-		//Количество строк на странице по умолчанию
-		$perPage = 30;
-		if (Input::has('per_page')) {
-			$perPage = Input::get('per_page');
+		$validator = Validator::make(
+			Input::all(),
+			array(
+				'page'      => 'integer|min:1',
+				'per_page'  => 'integer|between:1,100',
+				'sort'      => 'in:created,updated',
+				'direction' => 'in:asc,desc',
+			)
+		);
+		if ($validator->fails()) {
+			return Response::json(array(
+				'result'  => false,
+				'message' => array(
+					'messages' => $validator->messages(),
+					'failed'   => $validator->failed()
+				)
+			));
 		}
 
-		$sortingColumn = 'updated_at';
-		$direction = 'desc';
+		//Количество строк на странице
+		$perPage = Input::get('per_page', 30);
+		//Сортировка по полю
+		$sort = Input::get('sort', 'updated') . '_at';
+		//Направление сортировки
+		$direction = Input::get('direction', 'desc');
+
 		$teacher = UserTeacher::whereEnabled(1)->with(array(
 					'user' => function ($query) {
 							$query->whereEnabled(true);
 						}
 				)
-			)->orderBy($sortingColumn, $direction)->paginate($perPage);
+		)->orderBy($sort, $direction)->paginate($perPage);
 
 		return Response::json($teacher);
 	}

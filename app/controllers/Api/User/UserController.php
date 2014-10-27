@@ -16,9 +16,10 @@ class UserController extends \BaseController
 	 */
 	public function index()
 	{
+		$userComp = new UserComponent(Input::all());
+
 		return Response::json(
-		// Параметр означает условие запроса enabled=='1'
-			UserComponent::showUsers('1')
+			$userComp->showUsers()
 		);
 	}
 

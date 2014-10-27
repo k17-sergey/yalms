@@ -1,7 +1,6 @@
 <?php
 namespace Yalms\Component\User;
 
-use Input;
 use Yalms\Models\Users\User;
 use Yalms\Models\Users\UserAdmin;
 use Yalms\Models\Users\UserStudent;
@@ -55,36 +54,63 @@ class UserComponent
 		'confirmed'  => 'Пароли не совпадают.'
 	);
 
+
 	/**
 	 * Выдает список пользователей,
 	 * с выборкой по полю enabled, либо всех пользователей.
+	 *
+	 * Параметры:
+	 * state = enabled|disabled|all      выборка по полю "enabled", значение по умолчанию "enabled"
+	 * sort = created|updated            Сортировка по полю  "created_at" или "updated_at", по умолчанию "created"
+	 * direction = asc|desc              Направление сортировки, по умолчанию "desc"
+	 *
 	 * Постранично. Параметры запроса страниц (не обязательные):
 	 *      page — N страницы,
 	 *      per_page — количество на странице.
 	 *
-	 * @param string $controlEnabled Выборка пользователей по значению поля "enabled". Значения параметра: 1|0|all
-	 *
 	 * @return \Illuminate\Pagination\Paginator
 	 */
-	static public function showUsers($controlEnabled = 'all')
+	public function showUsers()
 	{
-		$perPage = 30; //Количество строк на странице по умолчанию
-		if (Input::has('per_page')) {
-			$perPage = Input::get('per_page');
+		/**
+		 * @var integer $per_page
+		 * @var string  $sort
+		 * @var string  $direction
+		 * @var string  $state
+		 */
+		$default = array(
+			'per_page'  => 30,
+			'sort'      => 'created',
+			'direction' => 'desc',
+			'state'     => 'enabled'
+		);
+		$expectedValues = array(
+			'page'      => 'integer|min:1',
+			'per_page'  => 'integer|between:1,100',
+			'sort'      => 'in:created,updated',
+			'direction' => 'in:asc,desc',
+			'state'     => 'in:enabled,disabled,all'
+		);
+		if (!$this->defaultParameters($default, $expectedValues)) {
+			return array(
+				'result'  => false,
+				'message' => $this->message
+			);
 		}
+		extract($default);
+		$sort .= '_at';
 
 		$users = null;
-		$sortingColumn = 'updated_at';
-		$direction = 'desc';
-		if ($controlEnabled == 'all') {
-			$users = User::with('teacher', 'student', 'admin')->orderBy($sortingColumn, $direction)->paginate(
-					$perPage,
-					array('id', 'first_name', 'middle_name', 'last_name', 'created_at', 'updated_at')
+		if ($state == 'all') {
+			$users = User::with('teacher', 'student', 'admin')->orderBy($sort, $direction)->paginate(
+				$per_page,
+				array('id', 'first_name', 'middle_name', 'last_name', 'created_at', 'updated_at')
 				);
-		} elseif ($controlEnabled == '1' || $controlEnabled == '0') {
-			$users = User::with('teacher', 'student', 'admin')->whereEnabled($controlEnabled)
-				->orderBy($sortingColumn, $direction)->paginate(
-					$perPage,
+		} else {
+			$state = ($state == 'enabled') ? '1' : '0';
+			$users = User::with('teacher', 'student', 'admin')->whereEnabled($state)
+				->orderBy($sort, $direction)->paginate(
+					$per_page,
 					array('id', 'first_name', 'middle_name', 'last_name', 'created_at', 'updated_at')
 				);
 		}
@@ -283,6 +309,40 @@ class UserComponent
 
 		return $areThereData;
 	}
+
+	/**
+	 * Проверка и установка значений для входных параметров, имеющих значения по умолчанию
+	 *
+	 * @param array $default        Массив параметров со значениями по умолчанию (название параметра => значение)
+	 * @param array $expectedValues Проверяемые входные значения, в сравнении с ожидаемыми. В формате для объекта Validator
+	 *
+	 * @return bool
+	 */
+	private function defaultParameters(&$default, $expectedValues)
+	{
+		$validator = Validator::make(
+			$this->input,
+			$expectedValues
+		);
+		if ($validator->fails()) {
+			$this->message = array(
+				'messages' => $validator->messages(),
+				'failed'   => $validator->failed()
+			);
+
+			return false;
+		}
+
+		foreach ($default as $parameter => $value) {
+			if (!empty($this->input[$parameter])) {
+				$default[$parameter] = $this->input[$parameter];
+			}
+		}
+
+		return true;
+	}
+
+
 
 
 	//*********************************
