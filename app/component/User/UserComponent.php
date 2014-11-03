@@ -1,12 +1,12 @@
 <?php
 namespace Yalms\Component\User;
 
+use Validator;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Yalms\Models\Users\User;
 use Yalms\Models\Users\UserAdmin;
 use Yalms\Models\Users\UserStudent;
 use Yalms\Models\Users\UserTeacher;
-use DB;
-use Validator;
 
 
 class UserComponent
@@ -35,13 +35,6 @@ class UserComponent
 	public $message = '';
 
 	/**
-	 * Статус результата
-	 *
-	 * @var int
-	 */
-	public $status = 200;
-
-	/**
 	 * Сообщения об ошибках при проверке данных
 	 *
 	 * @var array
@@ -51,7 +44,8 @@ class UserComponent
 		'unique'     => ':attribute с таким значением уже есть.',
 		'email'      => 'Должен быть корректный адрес электронной почты.',
 		'alpha_dash' => 'Должны быть только латинские символы, цифры, знаки подчёркивания (_) и дефисы (-).',
-		'confirmed'  => 'Пароли не совпадают.'
+		'confirmed' => 'Пароли не совпадают.',
+		'min'       => ':attribute должен быть не меньше :min символов'
 	);
 
 
@@ -130,12 +124,12 @@ class UserComponent
 			array(
 				'phone'    => 'required|unique:users',
 				'email'    => 'email',
-				'password' => 'required|alpha_dash|confirmed'
+				'password' => 'required|alpha_dash|min:8|confirmed'
 			),
 			$this->errorMessages
 		);
 		if ($validator->fails()) {
-			$this->message = $validator->messages();
+			$this->setValidatorMessage($validator);
 
 			return false;
 		}
@@ -151,34 +145,16 @@ class UserComponent
 			)
 		);
 
-		$activeConnection = DB::connection();
+		$activeConnection = $this->user->getConnection();
 		$activeConnection->beginTransaction();
 
 		try {
-			if ($this->user->save()) {
-				$isSaved = true;
+			if ($this->saveNewUser()) {
+				$activeConnection->commit();
 
-				$admin = new UserAdmin;
-				$admin->user_id = $this->user->id;
-				$isSaved &= $admin->save();
-
-				$teacher = new UserTeacher;
-				$teacher->user_id = $this->user->id;
-				$isSaved &= $teacher->save();
-
-				$student = new UserStudent;
-				$student->user_id = $this->user->id;
-				$isSaved &= $student->save();
-
-				if ($isSaved) {
-					$activeConnection->commit();
-					$this->message = 'This user is saved';
-
-					return true;
-				}
+				return true;
 			}
 			$activeConnection->rollBack();
-			$this->message = 'This user is not saved';
 		} catch (\Exception $error) {
 			$this->message = $error->getMessage();
 			$activeConnection->rollBack();
@@ -194,27 +170,25 @@ class UserComponent
 	 * @param  int $id
 	 *
 	 * @return bool
+	 * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
 	 */
 	public function update($id)
 	{
 		$this->user = User::find($id);
 		if (empty($this->user->id)) {
-			$this->message = 'User not found';
-			$this->status = 404;
-
-			return false;
+			throw new NotFoundHttpException;
 		}
 
 		$validator = Validator::make(
 			$this->input,
 			array(
 				'email'    => 'email',
-				'password' => 'alpha_dash|confirmed'
+				'password' => 'alpha_dash|min:8|confirmed'
 			),
 			$this->errorMessages
 		);
 		if ($validator->fails()) {
-			$this->message = $validator->messages();
+			$this->setValidatorMessage($validator);
 
 			return false;
 		}
@@ -243,47 +217,31 @@ class UserComponent
 	 * @param  int $id
 	 *
 	 * @return bool
+	 * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
 	 */
 	public function destroy($id)
 	{
 		$this->user = User::find($id);
 		if (empty($this->user->id)) {
-			$this->message = 'User not found';
-
-			return false;
+			throw new NotFoundHttpException;
 		}
 
-		$activeConnection = DB::connection();
+		$activeConnection = $this->user->getConnection();
 		$activeConnection->beginTransaction();
 
 		try {
-			$isChanged = false;
-			if (isset($this->user->admin->enabled) && $this->user->admin->enabled) {
-				$this->user->admin->enabled = false;
-				$isChanged = true;
-			}
-			if (isset($this->user->teacher->enabled) && $this->user->teacher->enabled) {
-				$this->user->teacher->enabled = false;
-				$isChanged = true;
-			}
-			if (isset($this->user->student->enabled) && $this->user->student->enabled) {
-				$this->user->student->enabled = false;
-				$isChanged = true;
-			}
-			if ($isChanged) {
-				$this->user->push();
-			}
+			if ($this->deleteUser()) {
+				$activeConnection->commit();
 
-			$result = $this->user->delete();
-			$this->message = ($result) ? 'Data deleted successfully' : 'Failed to delete data';
-			$activeConnection->commit();
+				return true;
+			}
+			$activeConnection->rollBack();
 		} catch (\Exception $error) {
-			$result = false;
 			$this->message = $error->getMessage();
 			$activeConnection->rollBack();
 		}
 
-		return $result;
+		return false;
 	}
 
 
@@ -325,10 +283,7 @@ class UserComponent
 			$expectedValues
 		);
 		if ($validator->fails()) {
-			$this->message = array(
-				'messages' => $validator->messages(),
-				'failed'   => $validator->failed()
-			);
+			$this->setValidatorMessage($validator);
 
 			return false;
 		}
@@ -340,6 +295,45 @@ class UserComponent
 		}
 
 		return true;
+	}
+
+	/**
+	 * @return bool
+	 */
+	private function saveNewUser()
+	{
+		$isSaved = $this->user->save();
+
+		$admin = new UserAdmin;
+		$admin->user_id = $this->user->id;
+		$isSaved &= $admin->save();
+
+		$teacher = new UserTeacher;
+		$teacher->user_id = $this->user->id;
+		$isSaved &= $teacher->save();
+
+		$student = new UserStudent;
+		$student->user_id = $this->user->id;
+		$isSaved &= $student->save();
+
+		$this->message = $isSaved ? 'This user is saved' : 'This user is not saved';
+
+		return $isSaved;
+	}
+
+	/**
+	 * @return bool
+	 */
+	private function deleteUser()
+	{
+		$this->user->admin->enabled = false;
+		$this->user->teacher->enabled = false;
+		$this->user->student->enabled = false;
+		$result = $this->user->push();
+		$result &= $this->user->delete();
+		$this->message = ($result) ? 'Data deleted successfully' : 'Failed to delete data';
+
+		return $result;
 	}
 
 
@@ -355,15 +349,13 @@ class UserComponent
 	 * @param  int $id
 	 *
 	 * @return bool
+	 * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
 	 */
 	public function updateAdmin($id)
 	{
 		$admin = UserAdmin::find($id);
 		if (empty($admin->user_id)) {
-			$this->message = 'Admin not found';
-			$this->status = 404;
-
-			return false;
+			throw new NotFoundHttpException;
 		}
 		if (!$this->validateProfile()) {
 			return false;
@@ -382,15 +374,13 @@ class UserComponent
 	 * @param  int $id
 	 *
 	 * @return bool
+	 * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
 	 */
 	public function updateStudent($id)
 	{
 		$student = UserStudent::find($id);
 		if (empty($student->user_id)) {
-			$this->message = 'Student not found';
-			$this->status = 404;
-
-			return false;
+			throw new NotFoundHttpException;
 		}
 		if (!$this->validateProfile()) {
 			return false;
@@ -409,15 +399,13 @@ class UserComponent
 	 * @param  int $id
 	 *
 	 * @return bool
+	 * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
 	 */
 	public function updateTeacher($id)
 	{
 		$teacher = UserTeacher::find($id);
 		if (empty($teacher->user_id)) {
-			$this->message = 'Teacher not found';
-			$this->status = 404;
-
-			return false;
+			throw new NotFoundHttpException;
 		}
 		if (!$this->validateProfile()) {
 			return false;
@@ -441,12 +429,25 @@ class UserComponent
 			)
 		);
 		if ($validator->fails()) {
-			$this->message = $validator->errors();
+			$this->setValidatorMessage($validator);
 
 			return false;
 		}
 
 		return true;
+	}
+
+	/**
+	 * Ошибки валидатора записываются в сообщение
+	 *
+	 * @param object $validator
+	 */
+	private function setValidatorMessage($validator)
+	{
+		$this->message = array(
+			'messages' => $validator->messages(),
+			'failed'   => $validator->failed()
+		);
 	}
 
 

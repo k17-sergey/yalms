@@ -1,14 +1,16 @@
 <?php
 namespace app\controllers\Api\User;
 
+use Input;
 use Response;
+use Validator;
+use app\controllers\Api\BaseApiController;
 use Yalms\Component\User\UserComponent;
 use Yalms\Models\Users\UserStudent;
 use Yalms\Models\Users\User;
-use Input;
-use Validator;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-class UserStudentController extends \BaseController
+class UserStudentController extends BaseApiController
 {
 
 	/**
@@ -34,13 +36,12 @@ class UserStudentController extends \BaseController
 			)
 		);
 		if ($validator->fails()) {
-			return Response::json(array(
-				'result'  => false,
-				'message' => array(
+			return $this->requestResult(
+				array(
 					'messages' => $validator->messages(),
 					'failed'   => $validator->failed()
 				)
-			));
+			);
 		}
 
 		$perPage = Input::get('per_page', 30);
@@ -49,6 +50,7 @@ class UserStudentController extends \BaseController
 
 		$student = UserStudent::whereEnabled(1)->with(array(
 					'user' => function ($query) {
+							/** @var User $query */
 							$query->whereEnabled(true);
 						}
 				)
@@ -65,10 +67,7 @@ class UserStudentController extends \BaseController
 	 */
 	public function create()
 	{
-		return Response::json(
-			array('Status' => 403, 'Message' => 'Forbidden'),
-			403
-		);
+		return $this->clientError(403);
 	}
 
 
@@ -79,10 +78,7 @@ class UserStudentController extends \BaseController
 	 */
 	public function store()
 	{
-		return Response::json(
-			array('Status' => 403, 'Message' => 'Forbidden'),
-			403
-		);
+		return $this->clientError(403);
 	}
 
 
@@ -99,12 +95,8 @@ class UserStudentController extends \BaseController
 		$user = User::whereEnabled(true)->find($id);
 
 		if (empty($student->user_id) || empty($user->id)) {
-			return Response::json(
-				array('Status' => 404, 'Message' => 'Not Found'),
-				404
-			);
+			return $this->clientError();
 		}
-
 
 		return Response::json(['student' => $student]);
 	}
@@ -121,10 +113,7 @@ class UserStudentController extends \BaseController
 	{
 		$user = User::whereEnabled(true)->find($id, array('id', 'first_name', 'middle_name', 'last_name'));
 		if (empty($user->id)) {
-			return Response::json(
-				array('Status' => 404, 'Message' => 'Not Found'),
-				404
-			);
+			return $this->clientError();
 		}
 
 		return Response::json(array(
@@ -148,27 +137,18 @@ class UserStudentController extends \BaseController
 	 */
 	public function update($id)
 	{
-		$user = User::whereEnabled(true)->find($id);
-		if (empty($user->id)) {
-			return Response::json(
-				array('Status' => 404, 'Message' => 'Not Found'),
-				404
-			);
-		}
-
 		$userComponent = new UserComponent(Input::all());
-		$result = $userComponent->updateStudent($id);
+		try {
+			$result = $userComponent->updateStudent($id);
+		} catch (NotFoundHttpException $exc) {
+			return $this->clientError();
+		}
 
 		if ($result) {
 			return $this->show($id);
 		}
 
-		return Response::json(array(
-				'result' => false,
-				'message' => $userComponent->message
-			),
-			$userComponent->status
-		);
+		return $this->requestResult($userComponent->message);
 	}
 
 
@@ -180,10 +160,7 @@ class UserStudentController extends \BaseController
 	 */
 	public function destroy()
 	{
-		return Response::json(
-			array('Status' => 403, 'Message' => 'Forbidden'),
-			403
-		);
+		return $this->clientError(403);
 	}
 
 

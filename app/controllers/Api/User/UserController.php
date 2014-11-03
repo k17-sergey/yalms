@@ -1,12 +1,15 @@
 <?php
 namespace app\controllers\Api\User;
 
+use Input;
 use Response;
+use app\controllers\Api\BaseApiController;
 use Yalms\Models\Users\User;
 use Yalms\Component\User\UserComponent;
-use Input;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-class UserController extends \BaseController
+
+class UserController extends BaseApiController
 {
 
 	/**
@@ -63,19 +66,10 @@ class UserController extends \BaseController
 		$result = $userComp->storeNewUser();
 
 		if ($result) {
-			$user = User::find(
-				$userComp->user->id,
-				array('id', 'first_name', 'middle_name', 'last_name', 'email', 'phone')
-			);
-
-			return Response::json($user, 201);
+			return $this->show($userComp->user->id, 201);
 		}
 
-		return Response::json(array(
-				'result'  => false,
-				'message' => $userComp->message
-			)
-		);
+		return $this->requestResult($userComp->message);
 	}
 
 
@@ -83,15 +77,20 @@ class UserController extends \BaseController
 	 * Display the specified resource.
 	 *
 	 * @param  int $id
+	 * @param int  $statusHttp
 	 *
 	 * @return Response
 	 */
-	public function show($id)
+	public function show($id, $statusHttp = 200)
 	{
-		$user = User::with('teacher', 'student', 'admin')
-			->findOrFail($id, array('id', 'first_name', 'middle_name', 'last_name', 'email', 'phone'));
+		try {
+			$user = User::with('teacher', 'student', 'admin')
+				->findOrFail($id, array('id', 'first_name', 'middle_name', 'last_name', 'email', 'phone'));
+		} catch (\Exception $exc) {
+			return $this->clientError();
+		}
 
-		return Response::json(['user' => $user]);
+		return Response::json(['user' => $user], $statusHttp);
 	}
 
 
@@ -104,7 +103,11 @@ class UserController extends \BaseController
 	 */
 	public function edit($id)
 	{
-		$user = User::findOrFail($id, array('id', 'first_name', 'middle_name', 'last_name', 'email', 'phone'));
+		try {
+			$user = User::findOrFail($id, array('id', 'first_name', 'middle_name', 'last_name', 'email', 'phone'));
+		} catch (\Exception $exc) {
+			return $this->clientError();
+		}
 
 		$fields = array(
 			'last_name'             => 'Фамилия',
@@ -133,20 +136,18 @@ class UserController extends \BaseController
 	public function update($id)
 	{
 		$userComponent = new UserComponent(\Input::all());
-		$result = $userComponent->update($id);
 
-		if ($userComponent->status == 404) {
-			return Response::json($userComponent->message, 404);
+		try {
+			$result = $userComponent->update($id);
+		} catch (NotFoundHttpException $exc) {
+			return $this->clientError();
 		}
+
 		if ($result) {
 			return $this->show($id);
 		}
 
-		return Response::json(array(
-				'result' => false,
-				'errors' => $userComponent->message
-			)
-		);
+		return $this->requestResult($userComponent->message, $result);
 	}
 
 
@@ -160,12 +161,17 @@ class UserController extends \BaseController
 	public function destroy($id)
 	{
 		$userComponent = new UserComponent();
+		try {
+			$result = $userComponent->destroy($id);
+			$message = $userComponent->message;
+		} catch (NotFoundHttpException $exc) {
+			return $this->clientError();
+		} catch (\Exception $exc) {
+			$result = false;
+			$message = $exc->getMessage();
+		}
 
-		return Response::json(array(
-				'result'  => $userComponent->destroy($id),
-				'message' => $userComponent->message
-			)
-		);
+		return $this->requestResult($message, $result);
 	}
 
 

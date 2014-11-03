@@ -32,16 +32,17 @@ class UserTest extends TestCase
 	 */
 	public function testUserCreate()
 	{
-		$this->call('POST', 'api/v1/user', [
-			'first_name' => 'Стас',
-			'last_name'  => 'Михайлов',
-			'phone'      => '79100000000',
-			'password' => '123',
-			'password_confirmation' => '123',
+		$response = $this->call('POST', 'api/v1/user', [
+			'first_name'            => 'Стас',
+			'last_name'             => 'Михайлов',
+			'phone'                 => '79100000000',
+			'password'              => '12345678',
+			'password_confirmation' => '12345678',
 		]);
 		$this->assertResponseStatus(201);
 
 		$user = User::first();
+		$this->assertNotEmpty($user, $response);
 		$this->assertEquals(1, $user->id);
 		$this->assertEquals(1, $user->student->user_id);
 		$this->assertEquals(1, $user->teacher->user_id);
