@@ -21,6 +21,10 @@ class UserController extends BaseApiController
 	{
 		$userComp = new UserComponent(Input::all());
 
+		if (!$userComp->validateParameters()) {
+			return $this->requestResult($userComp->message);
+		}
+
 		return Response::json(
 			$userComp->showUsers()
 		);
@@ -63,12 +67,10 @@ class UserController extends BaseApiController
 	public function store()
 	{
 		$userComp = new UserComponent(Input::all());
-		$result = $userComp->storeNewUser();
 
-		if ($result) {
+		if ($userComp->storeNewUser()) {
 			return $this->show($userComp->user->id, 201);
 		}
-
 		return $this->requestResult($userComp->message);
 	}
 

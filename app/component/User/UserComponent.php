@@ -48,6 +48,56 @@ class UserComponent
 		'min'       => ':attribute должен быть не меньше :min символов'
 	);
 
+	/**
+	 * Массив параметров запроса со значениями по умолчанию (название параметра => значение)
+	 *
+	 * @var array
+	 */
+	private $queryParameters = array(
+		'per_page'  => 30,
+		'sort'      => 'created',
+		'direction' => 'desc',
+		'state'     => 'enabled'
+	);
+	/**
+	 * Правила проверки параметров запроса (для объекта Validator)
+	 *
+	 * @var array
+	 */
+	private $parameterRules = array(
+		'page'      => 'integer|min:1',
+		'per_page'  => 'integer|between:1,100',
+		'sort'      => 'in:created,updated',
+		'direction' => 'in:asc,desc',
+		'state'     => 'in:enabled,disabled,all'
+	);
+
+	/**
+	 * Проверка параметров запроса множественных данных (страницы, сортировка и пр.)
+	 * и установка значений по умолчанию
+	 *
+	 * @return bool
+	 */
+	public function validateParameters()
+	{
+		$validator = Validator::make(
+			$this->input,
+			$this->parameterRules
+		);
+		if ($validator->fails()) {
+			$this->setValidatorMessage($validator);
+
+			return false;
+		}
+
+		foreach ($this->queryParameters as $parameter => $value) {
+			if (!empty($this->input[$parameter])) {
+				$this->queryParameters[$parameter] = $this->input[$parameter];
+			}
+		}
+
+		return true;
+	}
 
 	/**
 	 * Выдает список пользователей,
@@ -57,6 +107,8 @@ class UserComponent
 	 * state = enabled|disabled|all      выборка по полю "enabled", значение по умолчанию "enabled"
 	 * sort = created|updated            Сортировка по полю  "created_at" или "updated_at", по умолчанию "created"
 	 * direction = asc|desc              Направление сортировки, по умолчанию "desc"
+	 *
+	 * Для использования параметров запроса — предваритрельн вызвать "validateParameters()"
 	 *
 	 * Постранично. Параметры запроса страниц (не обязательные):
 	 *      page — N страницы,
@@ -72,26 +124,7 @@ class UserComponent
 		 * @var string  $direction
 		 * @var string  $state
 		 */
-		$default = array(
-			'per_page'  => 30,
-			'sort'      => 'created',
-			'direction' => 'desc',
-			'state'     => 'enabled'
-		);
-		$expectedValues = array(
-			'page'      => 'integer|min:1',
-			'per_page'  => 'integer|between:1,100',
-			'sort'      => 'in:created,updated',
-			'direction' => 'in:asc,desc',
-			'state'     => 'in:enabled,disabled,all'
-		);
-		if (!$this->defaultParameters($default, $expectedValues)) {
-			return array(
-				'result'  => false,
-				'message' => $this->message
-			);
-		}
-		extract($default);
+		extract($this->queryParameters);
 		$sort .= '_at';
 
 		$users = null;
@@ -266,35 +299,6 @@ class UserComponent
 		}
 
 		return $areThereData;
-	}
-
-	/**
-	 * Проверка и установка значений для входных параметров, имеющих значения по умолчанию
-	 *
-	 * @param array $default        Массив параметров со значениями по умолчанию (название параметра => значение)
-	 * @param array $expectedValues Проверяемые входные значения, в сравнении с ожидаемыми. В формате для объекта Validator
-	 *
-	 * @return bool
-	 */
-	private function defaultParameters(&$default, $expectedValues)
-	{
-		$validator = Validator::make(
-			$this->input,
-			$expectedValues
-		);
-		if ($validator->fails()) {
-			$this->setValidatorMessage($validator);
-
-			return false;
-		}
-
-		foreach ($default as $parameter => $value) {
-			if (!empty($this->input[$parameter])) {
-				$default[$parameter] = $this->input[$parameter];
-			}
-		}
-
-		return true;
 	}
 
 	/**
