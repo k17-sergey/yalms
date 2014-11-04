@@ -3,7 +3,6 @@ namespace app\controllers\Api\User;
 
 use Input;
 use Response;
-use Validator;
 use app\controllers\Api\BaseApiController;
 use Yalms\Component\User\UserComponent;
 use Yalms\Models\Users\UserTeacher;
@@ -26,30 +25,19 @@ class UserTeacherController extends BaseApiController
 	 */
 	public function index()
 	{
-		$validator = Validator::make(
-			Input::all(),
-			array(
-				'page'      => 'integer|min:1',
-				'per_page'  => 'integer|between:1,100',
-				'sort'      => 'in:created,updated',
-				'direction' => 'in:asc,desc',
-			)
-		);
-		if ($validator->fails()) {
-			return $this->requestResult(
-				array(
-					'messages' => $validator->messages(),
-					'failed'   => $validator->failed()
-				)
-			);
+		/**
+		 * @var integer $per_page
+		 * @var string  $sort
+		 * @var string  $direction
+		 */
+		$userComponent = new UserComponent(Input::only(
+			array('page', 'per_page', 'sort', 'direction')
+		));
+		if (!$userComponent->validateParameters()) {
+			return $this->requestResult($userComponent->message);
 		}
-
-		//Количество строк на странице
-		$perPage = Input::get('per_page', 30);
-		//Сортировка по полю
-		$sort = Input::get('sort', 'updated') . '_at';
-		//Направление сортировки
-		$direction = Input::get('direction', 'desc');
+		extract($userComponent->getQueryParameters());
+		$sort .= '_at';
 
 		$teacher = UserTeacher::whereEnabled(1)->with(array(
 					'user' => function ($query) {
@@ -57,7 +45,7 @@ class UserTeacherController extends BaseApiController
 							$query->whereEnabled(true);
 						}
 				)
-		)->orderBy($sort, $direction)->paginate($perPage);
+		)->orderBy($sort, $direction)->paginate($per_page);
 
 		return Response::json($teacher);
 	}

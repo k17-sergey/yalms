@@ -60,6 +60,14 @@ class UserComponent
 		'state'     => 'enabled'
 	);
 	/**
+	 * @return array  Массив параметров запроса с установками по умолчанию
+	 */
+	public function getQueryParameters()
+	{
+		return $this->queryParameters;
+	}
+
+	/**
 	 * Правила проверки параметров запроса (для объекта Validator)
 	 *
 	 * @var array
