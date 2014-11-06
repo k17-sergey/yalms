@@ -29,24 +29,101 @@ class UserComponent
 		$this->input = empty($input) ? array() : $input;
 	}
 
-	/**
-	 * @var string|array Сообщение о результате выполненных операций
-	 */
-	public $message = '';
 
 	/**
-	 * Сообщения об ошибках при проверке данных
+	 * Список полей при создании пользователя
 	 *
 	 * @var array
 	 */
-	private $errorMessages = array(
+	private $fieldsStore = array(
+		'first_name',
+		'middle_name',
+		'last_name',
+		'phone',
+		'email',
+		'password'
+	);
+
+	/**
+	 * @return array
+	 */
+	public function getFieldsStore()
+	{
+		$fields = $this->fieldsStore;
+		$fields[] = 'password_confirmation';
+
+		return $fields;
+	}
+
+	/**
+	 * Правила Валидатора при создании пользователя
+	 * @return array
+	 */
+	public function getRulesStore()
+	{
+		return array(
+			'phone'    => 'required|unique:users',
+			'email'    => 'email',
+			'password' => 'required|alpha_dash|min:8|confirmed'
+		);
+	}
+
+	/**
+	 * Список полей при обновлении данных пользователя
+	 *
+	 * @var array
+	 */
+	private $fieldsUpdate = array(
+		'first_name',
+		'middle_name',
+		'last_name',
+		'email',
+		'password'
+	);
+
+	/**
+	 * @return array
+	 */
+	public function getFieldsUpdate()
+	{
+		$fields = $this->fieldsUpdate;
+		$fields[] = 'password_confirmation';
+
+		return $fields;
+	}
+
+	/**
+	 * Правила Валидатора при создании пользователя
+	 *
+	 * @return array
+	 */
+	public function getRulesUpdate()
+	{
+		return array(
+			'email'    => 'email',
+			'password' => 'alpha_dash|min:8|confirmed'
+		);
+	}
+
+	/**
+	 * Сообщения об ошибках при проверке данных Валидатором
+	 *
+	 * @var array
+	 */
+	public $errorMessages = array(
 		'required'   => 'Поле должно быть заполнено обязательно!',
 		'unique'     => ':attribute с таким значением уже есть.',
 		'email'      => 'Должен быть корректный адрес электронной почты.',
 		'alpha_dash' => 'Должны быть только латинские символы, цифры, знаки подчёркивания (_) и дефисы (-).',
-		'confirmed' => 'Пароли не совпадают.',
+		'confirmed'  => 'Подтверждение для :attribute не выполнено.',
+		'password.confirmed' => 'Пароли не совпадают.',
 		'min'       => ':attribute должен быть не меньше :min символов'
 	);
+
+	/**
+	 * @var string|array Сообщение о результате выполненных операций
+	 */
+	public $message = '';
 
 	/**
 	 * Массив параметров запроса со значениями по умолчанию (название параметра => значение)
@@ -160,31 +237,8 @@ class UserComponent
 	 */
 	public function storeNewUser()
 	{
-		$validator = Validator::make(
-			$this->input,
-			array(
-				'phone'    => 'required|unique:users',
-				'email'    => 'email',
-				'password' => 'required|alpha_dash|min:8|confirmed'
-			),
-			$this->errorMessages
-		);
-		if ($validator->fails()) {
-			$this->setValidatorMessage($validator);
-
-			return false;
-		}
-
 		$this->user = new User;
-		$this->user->phone = $this->input['phone'];
-		$this->prepareToSave(array(
-				'first_name',
-				'middle_name',
-				'last_name',
-				'email',
-				'password'
-			)
-		);
+		$this->prepareToSave($this->fieldsStore);
 
 		$activeConnection = $this->user->getConnection();
 		$activeConnection->beginTransaction();

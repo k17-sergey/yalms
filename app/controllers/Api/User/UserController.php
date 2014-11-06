@@ -3,6 +3,7 @@ namespace app\controllers\Api\User;
 
 use Input;
 use Response;
+use Validator;
 use app\controllers\Api\BaseApiController;
 use Yalms\Models\Users\User;
 use Yalms\Component\User\UserComponent;
@@ -67,6 +68,15 @@ class UserController extends BaseApiController
 	public function store()
 	{
 		$userComp = new UserComponent(Input::all());
+
+		$this->validator = Validator::make(
+			Input::only($userComp->getFieldsStore()),
+			$userComp->getRulesStore(),
+			$userComp->errorMessages
+		);
+		if ($this->validator->fails()) {
+			return $this->requestResult('Failed validation of data');
+		}
 
 		if ($userComp->storeNewUser()) {
 			return $this->show($userComp->user->id, 201);

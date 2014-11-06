@@ -2,10 +2,16 @@
 
 namespace app\controllers\Api;
 
+use Illuminate\Validation\Validator;
 use Response;
 
 class BaseApiController extends \Controller
 {
+
+	/**
+	 * @var null|Validator
+	 */
+	protected $validator = null;
 
 	/**
 	 * @param int    $statusHTTP
@@ -39,11 +45,18 @@ class BaseApiController extends \Controller
 	 */
 	public function requestResult($message = 'Query failed', $result = false)
 	{
-		return Response::json(array(
-				'Result'  => $result,
-				'Message' => $message
-			)
+		$resultMessage = array(
+			'Result'  => $result,
+			'Message' => $message
 		);
+		if (!$result && !is_null($this->validator) && $this->validator->fails()) {
+			$resultMessage['Errors'] = array(
+				'messages' => $this->validator->messages(),
+				'failed'   => $this->validator->failed()
+			);
+		}
+
+		return Response::json($resultMessage);
 	}
 
 }
