@@ -20,28 +20,45 @@ class BaseApiController extends \Controller
 				$message = 'Forbidden';
 		}
 		return Response::json(array(
-				'Status'  => $statusHTTP,
-				'Message' => $message
+				'result'  => false,
+				'message' => $message,
+				'errors'  => array()
 			),
 			$statusHTTP
 		);
 	}
 
 	/**
-	 * Сообщение о результате выполнения запроса
-	 * (чаще нужно при ошибках; поскольку при удаче — следует выполнить перенаправление...
-	 *  сообщение об удачном выполнении нужно при удалении ресурса)
+	 * Сообщение об успешном выполнения запроса
 	 *
-	 * @param bool   $result
 	 * @param string $message
 	 *
 	 * @return \Illuminate\Http\JsonResponse
 	 */
-	public function requestResult($message = 'Query failed', $result = false)
+	public function responseSuccess($message = 'Success')
 	{
 		return Response::json(array(
-				'Result'  => $result,
-				'Message' => $message
+				'result'  => true,
+				'message' => $message,
+				'errors'  => array()
+			)
+		);
+	}
+
+	/**
+	 * Сообщение об ошибках
+	 *
+	 * @param string $message
+	 * @param array  $errors
+	 *
+	 * @return \Illuminate\Http\JsonResponse
+	 */
+	public function responseError($message = 'Query failed', $errors = array())
+	{
+		return Response::json(array(
+				'result'  => false,
+				'message' => $message,
+				'errors'  => $errors
 			)
 		);
 	}

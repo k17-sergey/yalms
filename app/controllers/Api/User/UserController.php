@@ -21,10 +21,6 @@ class UserController extends BaseApiController
 	{
 		$userComp = new UserComponent(Input::all());
 
-		if (!$userComp->validateParameters()) {
-			return $this->requestResult($userComp->message);
-		}
-
 		return Response::json(
 			$userComp->showUsers()
 		);
@@ -68,10 +64,11 @@ class UserController extends BaseApiController
 	{
 		$userComp = new UserComponent(Input::all());
 
-		if ($userComp->storeNewUser()) {
-			return $this->show($userComp->user->id, 201);
+		if ($userComp->storeNewUser() == UserComponent::FAILED_VALIDATION) {
+			return $this->responseError($userComp->getMessage(), $userComp->getErrors());
 		}
-		return $this->requestResult($userComp->message);
+
+		return $this->show($userComp->user->id, 201);
 	}
 
 
@@ -145,11 +142,11 @@ class UserController extends BaseApiController
 			return $this->clientError();
 		}
 
-		if ($result) {
-			return $this->show($id);
+		if ($result == UserComponent::FAILED_VALIDATION) {
+			return $this->responseError($userComponent->getMessage(), $userComponent->getErrors());
 		}
 
-		return $this->requestResult($userComponent->message, $result);
+		return $this->show($id);
 	}
 
 
@@ -164,16 +161,16 @@ class UserController extends BaseApiController
 	{
 		$userComponent = new UserComponent();
 		try {
-			$result = $userComponent->destroy($id);
-			$message = $userComponent->message;
+			$userComponent->destroy($id);
+
+			return $this->responseSuccess($userComponent->getMessage());
+
 		} catch (NotFoundHttpException $exc) {
 			return $this->clientError();
-		} catch (\Exception $exc) {
-			$result = false;
-			$message = $exc->getMessage();
-		}
 
-		return $this->requestResult($message, $result);
+		} catch (\Exception $exc) {
+			return $this->responseError($exc->getMessage());
+		}
 	}
 
 

@@ -25,19 +25,10 @@ class UserStudentController extends BaseApiController
 	 */
 	public function index()
 	{
-		/**
-		 * @var integer $per_page
-		 * @var string  $sort
-		 * @var string  $direction
-		 */
 		$userComponent = new UserComponent(Input::only(
 			array('page', 'per_page', 'sort', 'direction')
 		));
-		if (!$userComponent->validateParameters()) {
-			return $this->requestResult($userComponent->message);
-		}
-		extract($userComponent->getQueryParameters());
-		$sort .= '_at';
+		$params = $userComponent->getParameters();
 
 		$student = UserStudent::whereEnabled(1)->with(array(
 					'user' => function ($query) {
@@ -45,7 +36,7 @@ class UserStudentController extends BaseApiController
 							$query->whereEnabled(true);
 						}
 				)
-		)->orderBy($sort, $direction)->paginate($per_page);
+		)->orderBy($params->sort, $params->direction)->paginate($params->per_page);
 
 		return Response::json($student);
 	}
@@ -135,11 +126,11 @@ class UserStudentController extends BaseApiController
 			return $this->clientError();
 		}
 
-		if ($result) {
-			return $this->show($id);
+		if ($result == UserComponent::FAILED_VALIDATION) {
+			return $this->responseError($userComponent->getMessage(), $userComponent->getErrors());
 		}
 
-		return $this->requestResult($userComponent->message);
+		return $this->show($id);
 	}
 
 

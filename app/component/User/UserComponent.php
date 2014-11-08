@@ -11,6 +11,8 @@ use Yalms\Models\Users\UserTeacher;
 
 class UserComponent
 {
+	const RESULT_OK = true;
+	const FAILED_VALIDATION = false;
 
 	/**
 	 * @var null|User
@@ -30,9 +32,30 @@ class UserComponent
 	}
 
 	/**
-	 * @var string|array Сообщение о результате выполненных операций
+	 * @var string Сообщение о результате выполненных операций
 	 */
-	public $message = '';
+	private $message = '';
+
+	/**
+	 * @return string Сообщение о результате выполненных операций
+	 */
+	public function getMessage()
+	{
+		return $this->message;
+	}
+
+	/**
+	 * @var array Сообщение об ошибках проверки данных (Валидатора)
+	 */
+	private $errors = array();
+
+	/**
+	 * @return array Сообщение об ошибках проверки данных (Валидатора)
+	 */
+	public function getErrors()
+	{
+		return $this->errors;
+	}
 
 	/**
 	 * Сообщения об ошибках при проверке данных
@@ -44,8 +67,10 @@ class UserComponent
 		'unique'     => ':attribute с таким значением уже есть.',
 		'email'      => 'Должен быть корректный адрес электронной почты.',
 		'alpha_dash' => 'Должны быть только латинские символы, цифры, знаки подчёркивания (_) и дефисы (-).',
-		'confirmed' => 'Пароли не совпадают.',
-		'min'       => ':attribute должен быть не меньше :min символов'
+		'confirmed'          => 'Подтверждение для :attribute не выполнено.',
+		'password.confirmed' => 'Пароли не совпадают.',
+		'min'                => ':attribute должен быть не меньше :min символов',
+		'password.min'       => 'Пароль должен быть не меньше :min символов'
 	);
 
 	/**
@@ -60,51 +85,38 @@ class UserComponent
 		'state'     => 'enabled'
 	);
 	/**
-	 * @return array  Массив параметров запроса с установками по умолчанию
-	 */
-	public function getQueryParameters()
-	{
-		return $this->queryParameters;
-	}
-
-	/**
-	 * Правила проверки параметров запроса (для объекта Validator)
-	 *
-	 * @var array
-	 */
-	private $parameterRules = array(
-		'page'      => 'integer|min:1',
-		'per_page'  => 'integer|between:1,100',
-		'sort'      => 'in:created,updated',
-		'direction' => 'in:asc,desc',
-		'state'     => 'in:enabled,disabled,all'
-	);
-
-	/**
 	 * Проверка параметров запроса множественных данных (страницы, сортировка и пр.)
 	 * и установка значений по умолчанию
 	 *
-	 * @return bool
+	 * @return object
 	 */
-	public function validateParameters()
+	public function getParameters()
 	{
 		$validator = Validator::make(
 			$this->input,
-			$this->parameterRules
+			array(
+				'page'      => 'integer|min:1',
+				'per_page'  => 'integer',
+				'sort'      => 'in:created,updated',
+				'direction' => 'in:asc,desc',
+				'state'     => 'in:enabled,disabled,all'
+			)
 		);
-		if ($validator->fails()) {
-			$this->setValidatorMessage($validator);
-
-			return false;
-		}
-
-		foreach ($this->queryParameters as $parameter => $value) {
-			if (!empty($this->input[$parameter])) {
-				$this->queryParameters[$parameter] = $this->input[$parameter];
+		if ($validator->passes()) {
+			foreach ($this->queryParameters as $parameter => $value) {
+				if (!empty($this->input[$parameter])) {
+					$this->queryParameters[$parameter] = $this->input[$parameter];
+				}
 			}
 		}
+		$parameters = (object)$this->queryParameters;
+		$parameters->sort .= '_at';
+		$parameters->state = ($parameters->state == 'enabled') ? '1' : '0';
+		if ($parameters->per_page > 100) {
+			$parameters->per_page = 100;
+		}
 
-		return true;
+		return $parameters;
 	}
 
 	/**
@@ -126,26 +138,18 @@ class UserComponent
 	 */
 	public function showUsers()
 	{
-		/**
-		 * @var integer $per_page
-		 * @var string  $sort
-		 * @var string  $direction
-		 * @var string  $state
-		 */
-		extract($this->queryParameters);
-		$sort .= '_at';
+		$params = $this->getParameters();
 
 		$users = null;
-		if ($state == 'all') {
-			$users = User::with('teacher', 'student', 'admin')->orderBy($sort, $direction)->paginate(
-				$per_page,
+		if ($params->state == 'all') {
+			$users = User::with('teacher', 'student', 'admin')->orderBy($params->sort, $params->direction)->paginate(
+				$params->per_page,
 				array('id', 'first_name', 'middle_name', 'last_name', 'created_at', 'updated_at')
 				);
 		} else {
-			$state = ($state == 'enabled') ? '1' : '0';
-			$users = User::with('teacher', 'student', 'admin')->whereEnabled($state)
-				->orderBy($sort, $direction)->paginate(
-					$per_page,
+			$users = User::with('teacher', 'student', 'admin')->whereEnabled($params->state)
+				->orderBy($params->sort, $params->direction)->paginate(
+					$params->per_page,
 					array('id', 'first_name', 'middle_name', 'last_name', 'created_at', 'updated_at')
 				);
 		}
@@ -157,6 +161,7 @@ class UserComponent
 	 * Сохранение принятых данных для нового пользователя
 	 *
 	 * @return bool
+	 * @throws \ErrorException
 	 */
 	public function storeNewUser()
 	{
@@ -172,7 +177,7 @@ class UserComponent
 		if ($validator->fails()) {
 			$this->setValidatorMessage($validator);
 
-			return false;
+			return self::FAILED_VALIDATION;
 		}
 
 		$this->user = new User;
@@ -190,18 +195,14 @@ class UserComponent
 		$activeConnection->beginTransaction();
 
 		try {
-			if ($this->saveNewUser()) {
-				$activeConnection->commit();
-
-				return true;
-			}
-			$activeConnection->rollBack();
+			$this->saveNewUser();
+			$activeConnection->commit();
 		} catch (\Exception $error) {
-			$this->message = $error->getMessage();
 			$activeConnection->rollBack();
+			throw new \ErrorException('Failed to create new user');
 		}
 
-		return false;
+		return self::RESULT_OK;
 	}
 
 
@@ -211,6 +212,7 @@ class UserComponent
 	 * @param  int $id
 	 *
 	 * @return bool
+	 * @throws \ErrorException
 	 * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
 	 */
 	public function update($id)
@@ -231,7 +233,7 @@ class UserComponent
 		if ($validator->fails()) {
 			$this->setValidatorMessage($validator);
 
-			return false;
+			return self::FAILED_VALIDATION;
 		}
 
 		$areThereData = $this->prepareToSave(array(
@@ -243,13 +245,15 @@ class UserComponent
 			)
 		);
 		if (!$areThereData) {
-			return false;
+			return self::RESULT_OK;
 		}
 
-		$result = $this->user->save();
-		$this->message = ($result) ? 'Data saved successfully' : 'Failed to save data';
+		if (!$this->user->save()) {
+			throw new \ErrorException('Failed to save user data');
+		}
+		$this->message = 'Данные успешно сохранены';
 
-		return $result;
+		return self::RESULT_OK;
 	}
 
 	/**
@@ -257,7 +261,7 @@ class UserComponent
 	 *
 	 * @param  int $id
 	 *
-	 * @return bool
+	 * @throws \ErrorException
 	 * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
 	 */
 	public function destroy($id)
@@ -271,18 +275,12 @@ class UserComponent
 		$activeConnection->beginTransaction();
 
 		try {
-			if ($this->deleteUser()) {
-				$activeConnection->commit();
-
-				return true;
-			}
-			$activeConnection->rollBack();
+			$this->deleteUser();
+			$activeConnection->commit();
 		} catch (\Exception $error) {
-			$this->message = $error->getMessage();
 			$activeConnection->rollBack();
+			throw new \ErrorException('Failed to delete user');
 		}
-
-		return false;
 	}
 
 
@@ -303,14 +301,14 @@ class UserComponent
 			}
 		}
 		if (!$areThereData) {
-			$this->message = 'No required data.';
+			$this->message = 'No data.';
 		}
 
 		return $areThereData;
 	}
 
 	/**
-	 * @return bool
+	 * @throws \ErrorException
 	 */
 	private function saveNewUser()
 	{
@@ -327,14 +325,14 @@ class UserComponent
 		$student = new UserStudent;
 		$student->user_id = $this->user->id;
 		$isSaved &= $student->save();
-
-		$this->message = $isSaved ? 'This user is saved' : 'This user is not saved';
-
-		return $isSaved;
+		if (!$isSaved) {
+			throw new \ErrorException('This user is not saved');
+		}
+		$this->message = 'Данные успешно сохранены';
 	}
 
 	/**
-	 * @return bool
+	 * @throws \ErrorException
 	 */
 	private function deleteUser()
 	{
@@ -343,9 +341,10 @@ class UserComponent
 		$this->user->student->enabled = false;
 		$result = $this->user->push();
 		$result &= $this->user->delete();
-		$this->message = ($result) ? 'Data deleted successfully' : 'Failed to delete data';
-
-		return $result;
+		if (!$result) {
+			throw new \ErrorException('Failed to delete data');
+		}
+		$this->message = 'Данные успешно удалены';
 	}
 
 
@@ -361,6 +360,7 @@ class UserComponent
 	 * @param  int $id
 	 *
 	 * @return bool
+	 * @throws \ErrorException
 	 * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
 	 */
 	public function updateAdmin($id)
@@ -370,14 +370,16 @@ class UserComponent
 			throw new NotFoundHttpException;
 		}
 		if (!$this->validateProfile()) {
-			return false;
+			return self::FAILED_VALIDATION;
 		}
 
 		$admin->enabled = $this->input['enabled'];
-		$result = $admin->save();
-		$this->message = ($result) ? 'Data saved successfully' : 'Failed to save data';
+		if (!$admin->save()) {
+			throw new \ErrorException('Failed to save data');
+		}
+		$this->message = 'Данные успешно сохранены';
 
-		return $result;
+		return self::RESULT_OK;
 	}
 
 	/**
@@ -386,6 +388,7 @@ class UserComponent
 	 * @param  int $id
 	 *
 	 * @return bool
+	 * @throws \ErrorException
 	 * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
 	 */
 	public function updateStudent($id)
@@ -395,14 +398,16 @@ class UserComponent
 			throw new NotFoundHttpException;
 		}
 		if (!$this->validateProfile()) {
-			return false;
+			return self::FAILED_VALIDATION;
 		}
 
 		$student->enabled = $this->input['enabled'];
-		$result = $student->save();
-		$this->message = ($result) ? 'Data saved successfully' : 'Failed to save data';
+		if (!$student->save()) {
+			throw new \ErrorException('Failed to save data');
+		}
+		$this->message = 'Данные успешно сохранены';
 
-		return $result;
+		return self::RESULT_OK;
 	}
 
 	/**
@@ -411,6 +416,7 @@ class UserComponent
 	 * @param  int $id
 	 *
 	 * @return bool
+	 * @throws \ErrorException
 	 * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
 	 */
 	public function updateTeacher($id)
@@ -420,14 +426,16 @@ class UserComponent
 			throw new NotFoundHttpException;
 		}
 		if (!$this->validateProfile()) {
-			return false;
+			return self::FAILED_VALIDATION;
 		}
 
 		$teacher->enabled = $this->input['enabled'];
-		$result = $teacher->save();
-		$this->message = ($result) ? 'Data saved successfully' : 'Failed to save data';
+		if (!$teacher->save()) {
+			throw new \ErrorException('Failed to save data');
+		}
+		$this->message = 'Данные успешно сохранены';
 
-		return $result;
+		return self::RESULT_OK;
 	}
 
 	private function validateProfile()
@@ -456,10 +464,8 @@ class UserComponent
 	 */
 	private function setValidatorMessage($validator)
 	{
-		$this->message = array(
-			'messages' => $validator->messages(),
-			'failed'   => $validator->failed()
-		);
+		$this->message = 'Найдены ошибки при проверке данных';
+		$this->errors = $validator->messages();
 	}
 
 
