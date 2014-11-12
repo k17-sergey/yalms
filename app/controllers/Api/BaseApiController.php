@@ -20,7 +20,7 @@ class BaseApiController extends \Controller
 				$message = 'Forbidden';
 		}
 		return Response::json(array(
-				'result'  => false,
+				'done' => false,
 				'message' => $message,
 				'errors'  => array()
 			),
@@ -38,7 +38,7 @@ class BaseApiController extends \Controller
 	public function responseSuccess($message = 'Success')
 	{
 		return Response::json(array(
-				'result'  => true,
+				'done' => true,
 				'message' => $message,
 				'errors'  => array()
 			)
@@ -56,7 +56,7 @@ class BaseApiController extends \Controller
 	public function responseError($message = 'Query failed', $errors = array())
 	{
 		return Response::json(array(
-				'result'  => false,
+				'done' => false,
 				'message' => $message,
 				'errors'  => $errors
 			)

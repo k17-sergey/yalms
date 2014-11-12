@@ -6,7 +6,6 @@ use Response;
 use app\controllers\Api\BaseApiController;
 use Yalms\Models\Users\User;
 use Yalms\Component\User\UserComponent;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 
 class UserController extends BaseApiController
@@ -136,13 +135,7 @@ class UserController extends BaseApiController
 	{
 		$userComponent = new UserComponent(\Input::all());
 
-		try {
-			$result = $userComponent->update($id);
-		} catch (NotFoundHttpException $exc) {
-			return $this->clientError();
-		}
-
-		if ($result == UserComponent::FAILED_VALIDATION) {
+		if ($userComponent->update($id) == UserComponent::FAILED_VALIDATION) {
 			return $this->responseError($userComponent->getMessage(), $userComponent->getErrors());
 		}
 
@@ -160,17 +153,9 @@ class UserController extends BaseApiController
 	public function destroy($id)
 	{
 		$userComponent = new UserComponent();
-		try {
-			$userComponent->destroy($id);
+		$userComponent->destroy($id);
 
-			return $this->responseSuccess($userComponent->getMessage());
-
-		} catch (NotFoundHttpException $exc) {
-			return $this->clientError();
-
-		} catch (\Exception $exc) {
-			return $this->responseError($exc->getMessage());
-		}
+		return $this->responseSuccess($userComponent->getMessage());
 	}
 
 

@@ -219,7 +219,7 @@ class UserComponent
 	{
 		$this->user = User::find($id);
 		if (empty($this->user->id)) {
-			throw new NotFoundHttpException;
+			throw new NotFoundHttpException('Not found');
 		}
 
 		$validator = Validator::make(
@@ -268,7 +268,7 @@ class UserComponent
 	{
 		$this->user = User::find($id);
 		if (empty($this->user->id)) {
-			throw new NotFoundHttpException;
+			throw new NotFoundHttpException('Not found');
 		}
 
 		$activeConnection = $this->user->getConnection();
@@ -367,7 +367,7 @@ class UserComponent
 	{
 		$admin = UserAdmin::find($id);
 		if (empty($admin->user_id)) {
-			throw new NotFoundHttpException;
+			throw new NotFoundHttpException('Not found');
 		}
 		if (!$this->validateProfile()) {
 			return self::FAILED_VALIDATION;
@@ -395,7 +395,7 @@ class UserComponent
 	{
 		$student = UserStudent::find($id);
 		if (empty($student->user_id)) {
-			throw new NotFoundHttpException;
+			throw new NotFoundHttpException('Not found');
 		}
 		if (!$this->validateProfile()) {
 			return self::FAILED_VALIDATION;
@@ -423,7 +423,7 @@ class UserComponent
 	{
 		$teacher = UserTeacher::find($id);
 		if (empty($teacher->user_id)) {
-			throw new NotFoundHttpException;
+			throw new NotFoundHttpException('Not found');
 		}
 		if (!$this->validateProfile()) {
 			return self::FAILED_VALIDATION;
