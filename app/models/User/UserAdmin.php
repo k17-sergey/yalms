@@ -11,6 +11,7 @@ use Eloquent;
  * @property boolean $enabled
  *
  * @method static UserAdmin find($id)
+ * @method static UserAdmin findOrFail($id)
  *
  */
 class UserAdmin extends Eloquent

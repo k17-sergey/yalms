@@ -81,12 +81,8 @@ class UserController extends BaseApiController
 	 */
 	public function show($id, $statusHttp = 200)
 	{
-		try {
-			$user = User::with('teacher', 'student', 'admin')
-				->findOrFail($id, array('id', 'first_name', 'middle_name', 'last_name', 'email', 'phone'));
-		} catch (\Exception $exc) {
-			return $this->clientError();
-		}
+		$user = User::with('teacher', 'student', 'admin')
+			->findOrFail($id, array('id', 'first_name', 'middle_name', 'last_name', 'email', 'phone'));
 
 		return Response::json(['user' => $user], $statusHttp);
 	}
@@ -101,11 +97,7 @@ class UserController extends BaseApiController
 	 */
 	public function edit($id)
 	{
-		try {
-			$user = User::findOrFail($id, array('id', 'first_name', 'middle_name', 'last_name', 'email', 'phone'));
-		} catch (\Exception $exc) {
-			return $this->clientError();
-		}
+		$user = User::findOrFail($id, array('id', 'first_name', 'middle_name', 'last_name', 'email', 'phone'));
 
 		$fields = array(
 			'last_name'             => 'Фамилия',

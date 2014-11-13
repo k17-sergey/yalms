@@ -14,6 +14,7 @@ use Yalms\Models\Courses\Course;
  *
  * @method static UserTeacher first
  * @method static UserTeacher find($id)
+ * @method static UserTeacher findOrFail($id)
  * @method static UserTeacher whereEnabled($boolean)
  */
 class UserTeacher extends Eloquent

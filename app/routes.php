@@ -28,12 +28,20 @@ Route::group(array('prefix' => 'api/v1'), function () {
 		}
 
 		return Response::json(array(
-				//или 'done'  => false,
-				'come_true' => false,
 				'message'   => $exception->getMessage(),
 				'errors'    => array()
 			),
 			$code
+		);
+	});
+	\App::error(function (Illuminate\Database\Eloquent\ModelNotFoundException $exception, $code) {
+		$modelName = explode("\\", $exception->getModel());
+
+		return Response::json(array(
+				'message' => array_pop($modelName) . ' not found',
+				'errors'  => array()
+			),
+			404
 		);
 	});
 

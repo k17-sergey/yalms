@@ -7,7 +7,6 @@ use app\controllers\Api\BaseApiController;
 use Yalms\Component\User\UserComponent;
 use Yalms\Models\Users\UserStudent;
 use Yalms\Models\Users\User;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class UserStudentController extends BaseApiController
 {
@@ -49,7 +48,7 @@ class UserStudentController extends BaseApiController
 	 */
 	public function create()
 	{
-		return $this->clientError(403);
+		return $this->clientError(405);
 	}
 
 
@@ -60,7 +59,7 @@ class UserStudentController extends BaseApiController
 	 */
 	public function store()
 	{
-		return $this->clientError(403);
+		return $this->clientError(405);
 	}
 
 
@@ -73,12 +72,8 @@ class UserStudentController extends BaseApiController
 	 */
 	public function show($id)
 	{
+		User::whereEnabled(true)->findOrFail($id);
 		$student = UserStudent::with('user')->find($id, array('user_id', 'enabled'));
-		$user = User::whereEnabled(true)->find($id);
-
-		if (empty($student->user_id) || empty($user->id)) {
-			return $this->clientError();
-		}
 
 		return Response::json(['student' => $student]);
 	}
@@ -93,10 +88,7 @@ class UserStudentController extends BaseApiController
 	 */
 	public function edit($id)
 	{
-		$user = User::whereEnabled(true)->find($id, array('id', 'first_name', 'middle_name', 'last_name'));
-		if (empty($user->id)) {
-			return $this->clientError();
-		}
+		$user = User::whereEnabled(true)->findOrFail($id, array('id', 'first_name', 'middle_name', 'last_name'));
 
 		return Response::json(array(
 			'student' => array(
@@ -120,13 +112,8 @@ class UserStudentController extends BaseApiController
 	public function update($id)
 	{
 		$userComponent = new UserComponent(Input::all());
-		try {
-			$result = $userComponent->updateStudent($id);
-		} catch (NotFoundHttpException $exc) {
-			return $this->clientError();
-		}
 
-		if ($result == UserComponent::FAILED_VALIDATION) {
+		if ($userComponent->updateStudent($id) == UserComponent::FAILED_VALIDATION) {
 			return $this->responseError($userComponent->getMessage(), $userComponent->getErrors());
 		}
 
@@ -142,7 +129,7 @@ class UserStudentController extends BaseApiController
 	 */
 	public function destroy()
 	{
-		return $this->clientError(403);
+		return $this->clientError(405);
 	}
 
 

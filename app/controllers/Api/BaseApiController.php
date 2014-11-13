@@ -18,9 +18,11 @@ class BaseApiController extends \Controller
 		switch ($statusHTTP) {
 			case 403:
 				$message = 'Forbidden';
+				break;
+			case 405:
+				$message = 'Method not allowed';
 		}
 		return Response::json(array(
-				'done' => false,
 				'message' => $message,
 				'errors'  => array()
 			),
@@ -38,7 +40,6 @@ class BaseApiController extends \Controller
 	public function responseSuccess($message = 'Success')
 	{
 		return Response::json(array(
-				'done' => true,
 				'message' => $message,
 				'errors'  => array()
 			)
@@ -56,7 +57,6 @@ class BaseApiController extends \Controller
 	public function responseError($message = 'Query failed', $errors = array())
 	{
 		return Response::json(array(
-				'done' => false,
 				'message' => $message,
 				'errors'  => $errors
 			)

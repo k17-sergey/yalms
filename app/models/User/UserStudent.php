@@ -12,6 +12,7 @@ use Eloquent;
  *
  * @method static UserStudent first
  * @method static UserStudent find($id) first
+ * @method static UserStudent findOrFail($id)
  * @method static UserStudent whereEnabled($boolean)
  */
 class UserStudent extends Eloquent

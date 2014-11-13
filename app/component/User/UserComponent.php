@@ -2,7 +2,6 @@
 namespace Yalms\Component\User;
 
 use Validator;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Yalms\Models\Users\User;
 use Yalms\Models\Users\UserAdmin;
 use Yalms\Models\Users\UserStudent;
@@ -217,10 +216,7 @@ class UserComponent
 	 */
 	public function update($id)
 	{
-		$this->user = User::find($id);
-		if (empty($this->user->id)) {
-			throw new NotFoundHttpException('Not found');
-		}
+		$this->user = User::findOrFail($id);
 
 		$validator = Validator::make(
 			$this->input,
@@ -266,10 +262,7 @@ class UserComponent
 	 */
 	public function destroy($id)
 	{
-		$this->user = User::find($id);
-		if (empty($this->user->id)) {
-			throw new NotFoundHttpException('Not found');
-		}
+		$this->user = User::findOrFail($id);
 
 		$activeConnection = $this->user->getConnection();
 		$activeConnection->beginTransaction();
@@ -361,14 +354,10 @@ class UserComponent
 	 *
 	 * @return bool
 	 * @throws \ErrorException
-	 * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
 	 */
 	public function updateAdmin($id)
 	{
-		$admin = UserAdmin::find($id);
-		if (empty($admin->user_id)) {
-			throw new NotFoundHttpException('Not found');
-		}
+		$admin = UserAdmin::findOrFail($id);
 		if (!$this->validateProfile()) {
 			return self::FAILED_VALIDATION;
 		}
@@ -389,14 +378,10 @@ class UserComponent
 	 *
 	 * @return bool
 	 * @throws \ErrorException
-	 * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
 	 */
 	public function updateStudent($id)
 	{
-		$student = UserStudent::find($id);
-		if (empty($student->user_id)) {
-			throw new NotFoundHttpException('Not found');
-		}
+		$student = UserStudent::findOrFail($id);
 		if (!$this->validateProfile()) {
 			return self::FAILED_VALIDATION;
 		}
@@ -417,14 +402,10 @@ class UserComponent
 	 *
 	 * @return bool
 	 * @throws \ErrorException
-	 * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
 	 */
 	public function updateTeacher($id)
 	{
-		$teacher = UserTeacher::find($id);
-		if (empty($teacher->user_id)) {
-			throw new NotFoundHttpException('Not found');
-		}
+		$teacher = UserTeacher::findOrFail($id);
 		if (!$this->validateProfile()) {
 			return self::FAILED_VALIDATION;
 		}
